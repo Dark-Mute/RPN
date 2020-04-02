@@ -19,12 +19,12 @@ namespace ConsoleApp1
                 double min = 2;
                 double max = 4;
                 int ammo = 5;
-                /*
-                double x = double.Parse(Console.ReadLine());
-                double min = double.Parse(Console.ReadLine());
-                double max = double.Parse(Console.ReadLine());
-                int ammo = int.Parse(Console.ReadLine());
-                 */
+                
+                x = double.Parse(Console.ReadLine());
+                min = double.Parse(Console.ReadLine());
+                max = double.Parse(Console.ReadLine());
+                ammo = int.Parse(Console.ReadLine());
+                 
 
                 for (int i = 0;i<row.Length;i++)
                 {
