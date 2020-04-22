@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace serwer.Models
 {
-    public class tokentsresult
+    public class RokentsResult
     {
         public object[] infix { get; set;}
         public object[] rpn { get; set;}

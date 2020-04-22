@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace serwer.Models
 {
-    public class error : Imodel
+    public class Error : Imodel
     {
         public string status { get; set; }
         public object message { get; set; }

@@ -11,26 +11,18 @@ namespace ConsoleApp1
     {
         static void Main(string[] args)
         {
-            try
-            {
-               // Console.WriteLine("podaj: 1. równanie 2. wartość x 3. minimum zakresu 4. maximum zakresu 5. ilość próbek");
+            Console.WriteLine("podaj: 1. równanie 2. wartość x 3. minimum zakresu 4. maximum zakresu 5. ilość próbek");
 
-                string all = Console.ReadLine();
-                Console.Clear();
-                RPN rPN = new RPN(all);           
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-
+            string all = Console.ReadLine();
+            Console.Clear();
+            RPN rPN = new RPN(all);
             Console.Read();
-        }        
-}
+        }
+    }
 
     enum typy
     {
-        LICZBA,      
+        LICZBA,
         ZNAK,
         X,
         WYRAZENIE,
@@ -41,7 +33,7 @@ namespace ConsoleApp1
 
     class typ
     {
-        public typ(typy t,string v)
+        public typ(typy t, string v)
         {
             typ_of = t;
             value = v;
@@ -50,78 +42,45 @@ namespace ConsoleApp1
         public typy typ_of { get; private set; }
     }
 
-    class InvalidEquasion : Exception
+    class EquasionException : Exception
     {
-        public InvalidEquasion(string message) : base(message)
-        {}
+        public EquasionException(string message) : base(message)
+        { }
     }
 
     class RPN
     {
-        char[] znaki = {'+','/','*' ,'^'};        
-        char[] liczby = { '1', '2', '3', '4', '5', '6', '7', '8','9','0','.','x',','};       
-  
         public RPN(string all)
         {
             try
             {
                 for (int i = 0; i < all.Length; i++)
-                  {
-                      if (all[i] == '"')
+                {
+                    if (all[i] == '"')
                         all = all.Remove(i, 1);
-                  }
+                }
                 string[] array = all.Split(' ');
 
-                string row = "1 + 1";
-                double x = 1;
-                double min = 1;
-                double max = 1;
-                int ammount = 1;
+                if (array.Length != 5)
+                    throw new EquasionException("Nie podałeś odpowiedniej ilości parametrów");
 
-                if (array.Length == 5)
-                {
-                    row = array[0];
-                    x = double.Parse(array[1]);
-                    min = double.Parse(array[2]);
-                    max = double.Parse(array[3]);
-                    ammount = int.Parse(array[4]);
-                }
-                else
-                {
-                    throw new InvalidEquasion("Nie podałeś odpowiedniej ilości parametrów");
-                }
-                row = row.Replace('.', ',');
-
-              
-
-                if (!row.EndsWith("="))
-                {
-                    row = row + "=";
-                }
-                string r;
-                List<typ> elementynieznane = FindType3(row, double.NaN,out r);
+                string r = "";
+                List<typ> onp = FindType(array[0].Replace('.', ','), double.NaN, ref r);
                 Console.WriteLine(r);
-              
-                wyswietl_gotowe(elementynieznane);
-                calculate_unnown(x, elementynieznane);
-                calculate_unnown_range(min, max, ammount, elementynieznane);
 
-               /* string onw = "";
-                for (int o = 0; o < elementynieznane.Count; o++)
-                {
-                    onw += elementynieznane[o].value + " ";
-                }
-                    odwroc_rownanie2(onw);*/
-            }
-            catch (InvalidEquasion iq)
-            {
-                Console.WriteLine(iq.Message);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
+                show_ready(onp);
+                calculate_unnown(double.Parse(array[1]), onp);
+                calculate_unnown_range(double.Parse(array[2]), double.Parse(array[3]), int.Parse(array[4]), onp);
 
+            }
+            catch (EquasionException exe)
+            {
+                Console.WriteLine(exe.Message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
 
         List<typ> deepcopy(List<typ> elementy)
@@ -134,820 +93,320 @@ namespace ConsoleApp1
             return temp;
         }
 
-        char[] znaki4 = { '-', '+', '/', '*', '^' };
-        char[] liczby4 = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', ',' };
+        char[] znaki = { '-', '+', '/', '*', '^' };
+        char[] liczby = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', ',' };
 
-      
-
-        List<typ> FindType2(string row, double nie)
+        List<typ> FindType(string row, double unnown, ref string r)
         {
             List<typ> elements = new List<typ>();
             List<Stack<typ>> characters = new List<Stack<typ>>();
-            Stack<typ> expressions = new Stack<typ>();
-           
+            Stack<typ> expresCounts = new Stack<typ>();
             characters.Add(new Stack<typ>());
-            int eqcounter = 0;
-            string number = "";
+            int eqCoun = 0, expresCount = 0;
+            string number = "", minus = "", temp;
             typ ischaracter = null;
-            bool divide = false, endof = false, numbertaken = false, equasionopen = true, minus = false;
-           
-            int expression = 0;
-            while (row[0] != '=')
+            bool isDiv = false, numIsT = false, eqIsOpen = true;
+
+            void numbers()
             {
-                
-                if (row[0] == '-' && equasionopen)
-                {
-                    minus = true;
-                    row = row.Remove(0, 1);
-                    equasionopen = false;                  
-                    continue;
-                }
-
-                string ss;
-                if (row.Length >= 2)
-                {
-
-                    ss = row.Substring(0, 2);
-                    if (ss == "PI")
-                    {
-                        if (numbertaken)
-                        {
-                            throw new InvalidEquasion("Coś jest źle z równaniem pi");
-                        }
-                        row = row.Remove(0, 2);
-                        if (minus)
-                        {
-                            elements.Add(new typ(typy.PI, "-PI"));
-                            
-                        }
-                        else
-                        {
-                            elements.Add(new typ(typy.PI, "PI"));
-                            
-                        }
-                        
-                        minus = false;
-                        divide = false;
-                        endof = false;
-                        numbertaken = true;
-                        equasionopen = false;
-                        ischaracter = null;
-                        continue;
-                    }
-                }
-
-                if (row[0] == 'x')
-                {
-                    if (divide && nie == 0 || numbertaken)
-                    {
-                        throw new InvalidEquasion("Coś jest źle z równaniem x");
-                    }
-                    row = row.Remove(0, 1);
-                    if (minus)
-                    {
-                        elements.Add(new typ(typy.X, "-x"));
-                        
-                    }
-                    else
-                    {
-                        elements.Add(new typ(typy.X, "x"));
-                       
-                    }
-                     
-                    minus = false;
-                    divide = false;
-                    endof = false;
-                    numbertaken = true;
-                    equasionopen = false;
-                    ischaracter = null;
-                    continue;
-                }
-
-
-                if (row.IndexOfAny(liczby4, 0) == 0)
-                {
-                    number += row[0];
-                    row = row.Remove(0, 1);
-
-                    equasionopen = false;
-                    while (row.IndexOfAny(liczby4, 0) == 0)
-                    {
-                        number += row[0];
-                        row = row.Remove(0, 1);
-                    }
-
-                    if (divide && double.Parse(number) == 0 || numbertaken)
-                    {
-                        throw new InvalidEquasion("Coś jest źle z równaniem liczba");
-                    }
-                    if (minus)
-                    {
-                        elements.Add(new typ(typy.LICZBA, '-' + number));
-                       
-                    }
-                    else
-                    {
-                        elements.Add(new typ(typy.LICZBA, number));
-                        
-                    }
-                     
-
-                    number = "";
-                    minus = false;
-                    divide = false;
-                    endof = false;
-                    numbertaken = true;
-                    equasionopen = false;
-                    ischaracter = null;
-                    continue;
-
-                }
-
-                //////////////////////////////////////////////////
-
-
-                if (row.IndexOfAny(znaki4, 0) == 0)
-                {
-                    if (ischaracter != null || minus)
-                    {
-                        throw new InvalidEquasion("Coś jest źle z równaniem znak");
-                    }
-
-                  
-
-                    if (row[0] == '^')
-                    {
-                        ischaracter = new typ(typy.POTENGA, row[0].ToString());
-                    }
-                    else
-                    {
-                        if (row[0].ToString() == "/")
-                            divide = true;
-                        ischaracter = new typ(typy.ZNAK, row[0].ToString());
-
-                    }
-                   
-                    
-                    endof = true;
-
-                    row = row.Remove(0, 1);
-
-                    typ z = null;
-
-                    if (characters[eqcounter].Count > 0)
-                        z = characters[eqcounter].Pop();
-
-                    if (z != null)
-                    {
-                        if (ischaracter.value == "+" || ischaracter.value == "-")
-                        {
-                            elements.Add(z);
-                            z = null;
-                        }
-                        if (ischaracter.value == "*" || ischaracter.value == "/")
-                        {
-                            if (z.value == "*" || z.value == "/" || z.value == "^")
-                            {
-                                elements.Add(z);
-                                z = null;
-                            }
-                        }
-                        if (ischaracter.value == "^")
-                        {
-                            if (z.value == "^")
-                            {
-                                elements.Add(z);
-                                z = null;
-                            }
-                        }
-                    }
-
-                    if (z != null)
-                    {
-                        characters[eqcounter].Push(z);
-                    }
-
-                    characters[eqcounter].Push(ischaracter);
-                    numbertaken = false;
-
-                    continue;
-                }
-                ///////////////////////////////////////////
-
-
-
-
-
-                if (row.Length >= 4)
-                {
-                    ss = row.Substring(0, 4);
-                    if (ss == "abs(" || ss == "cos(" || ss == "sin(" || ss == "tan(" || ss == "exp(" || ss == "log(")
-                    {
-                        ss = ss.Substring(0, 3);
-                        expressions.Push(new typ(typy.WYRAZENIE, ss));
-                     
-                        row = row.Remove(0, 4);
-
-                        numbertaken = false;
-                        ischaracter = null;
-                        equasionopen = true;
-                        eqcounter++;
-                        expression++;
-                        if (characters.Count <= eqcounter)
-                        {
-                            characters.Add(new Stack<typ>());
-                        }
-                        
-                        
-                        continue;
-                    }
-                }
-
-                else if (row.Length >= 5)
-                {
-                    ss = row.Substring(0, 5);
-                    if (ss == "sqrt(" || ss == "cosh(" || ss == "sinh(" || ss == "tanh(" || ss == "asin(" || ss == "acos(" || ss == "atan(")
-                    {
-                        ss = ss.Substring(0, 4);
-                        expressions.Push(new typ(typy.WYRAZENIE, ss));
-                    
-                        row = row.Remove(0, 5);
-
-                        numbertaken = false;
-                        ischaracter = null;
-                        equasionopen = true;
-                        eqcounter++;
-                        expression++;
-                        if (characters.Count <= eqcounter)
-                        {
-                            characters.Add(new Stack<typ>());
-                        }
-                   
-                        
-                        continue;
-                    }
-                }
-
-
-
-                ///////////////////////////////////////////
-
-                if (row[0] == '(')
-                {
-
-                    eqcounter++;
-                    if (characters.Count <= eqcounter)
-                    {
-                        characters.Add(new Stack<typ>());
-                    }
-                    expressions.Push(new typ(typy.NAWIAS, "("));
-                    row = row.Remove(0, 1);
-                    
-                    
-                    equasionopen = true;
-                    continue;
-                }
-
-                ///////////////////////////////////////////
-
-                if (row[0] == ')')
-                {
-                    if (!numbertaken)
-                    {
-                        throw new InvalidEquasion("Coś jest źle z równaniem nawias zam");
-                    }
-                    typ t = expressions.Pop();
-                    if (t.typ_of == typy.WYRAZENIE)
-                    {
-
-                        while (characters[eqcounter].Count != 0)
-                        {
-                            elements.Add(characters[eqcounter].Pop());
-                        }
-                        expression--;
-                        eqcounter--;
-                        row = row.Remove(0, 1);
-                        elements.Add(t);
-
-                    }
-                    else
-                    {
-
-                        while (characters[eqcounter].Count != 0)
-                        {
-                            elements.Add(characters[eqcounter].Pop());
-                        }
-                        row = row.Remove(0, 1);
-                        eqcounter--;
-                    }
-                   
-                    
-                    continue;
-                }
-                throw new InvalidEquasion("równanie ma niepoprawne znaki koniec" + row);
+                minus = "";
+                isDiv = false;
+                numIsT = true;
+                eqIsOpen = false;
             }
 
-            while (characters[eqcounter].Count != 0)
+            void equasions()
             {
-                elements.Add(characters[eqcounter].Pop());
-            }
-
-            if (eqcounter != 0 || endof || divide || !numbertaken)
-            {
-                throw new InvalidEquasion("Coś jest źle z równaniem po koncu");
-            }
-
-
-
-            for (int i = 0; i < elements.Count; i++)
-            {
-                if (elements[i].value == "")
+                numIsT = false;
+                eqIsOpen = true;
+                minus = "";
+                eqCoun++;
+                expresCount++;
+                if (characters.Count <= eqCoun)
                 {
-                    elements.RemoveAt(i);
-                }
-                if (elements[i].value == "PI")
-                {
-                    elements[i] = new typ(typy.PI, Math.PI.ToString());
-                }
-                if (elements[i].value == "-PI")
-                {
-                    elements[i] = new typ(typy.PI, "-" + Math.PI.ToString());
+                    characters.Add(new Stack<typ>());
                 }
             }
 
-           
-            return elements;
-        }
-
-        List<typ> FindType3(string row, double nie, out string r)
-        {
-            List<typ> elements = new List<typ>();
-            List<Stack<typ>> characters = new List<Stack<typ>>();
-            Stack<typ> expressions = new Stack<typ>();
-            r = "";
-            characters.Add(new Stack<typ>());
-            int eqcounter = 0;
-            string number = "";
-            typ ischaracter = null;
-            bool divide = false, endof = false, numbertaken = false, equasionopen = true, minus = false;
-           
-            int expression = 0;
-            for(int i =0;i<row.Length-2;i++)           
+            for (int i = 0; i < row.Length; i++)
             {
-
-                if (row[i] == '-' && equasionopen)
+                if (row[i] == '-' && eqIsOpen)
                 {
-                    minus = true;
-                    row = row.Remove(0, 1);
-                    equasionopen = false;
+                    minus = "-";
+                    eqIsOpen = false;
                     continue;
                 }
 
-                string ss;
-                if (row.Length >= 2)
+                if (row.Length >= i + 2 && row.Substring(i, 2) == "PI")
                 {
+                    if (numIsT)
+                        throw new EquasionException("Coś jest źle z równaniem pi");
 
-                    ss = row.Substring(i, 2);
-                    if (ss == "PI")
-                    {
-                        if (numbertaken)
-                        {
-                            throw new InvalidEquasion("Coś jest źle z równaniem pi");
-                        }
-                        i += 1;
-                        if (minus)
-                        {
-                            elements.Add(new typ(typy.PI, "-PI"));
-                            r += "-PI ";
-                        }
-                        else
-                        {
-                            elements.Add(new typ(typy.PI, "PI"));
-                            r += "PI ";
-                        }
-                        
-                        minus = false;
-                        divide = false;
-                        endof = false;
-                        numbertaken = true;
-                        equasionopen = false;
-                        ischaracter = null;
-                        continue;
-                    }
+                    i += 1;
+                    elements.Add(new typ(typy.PI, minus + Math.PI.ToString()));
+                    r += minus + "PI";
+                    numbers();
+                    continue;
                 }
 
                 if (row[i] == 'x')
                 {
-                    if (divide && nie == 0 || numbertaken)
-                    {
-                        throw new InvalidEquasion("Coś jest źle z równaniem x");
-                    }                    
-                    if (minus)
-                    {
-                        elements.Add(new typ(typy.X, "-x"));
-                        r += "-x ";
-                    }
-                    else
-                    {
-                        elements.Add(new typ(typy.X, "x"));
-                        r += "x ";
-                    }
-                  
-                    minus = false;
-                    divide = false;
-                    endof = false;
-                    numbertaken = true;
-                    equasionopen = false;
-                    ischaracter = null;
+                    if (isDiv && unnown == 0 || numIsT)
+                        throw new EquasionException("Coś jest źle z równaniem lub /0");
+
+                    elements.Add(new typ(typy.X, minus + "x"));
+                    r += minus + "x ";
+                    numbers();
                     continue;
                 }
 
-
-                if (row.IndexOfAny(liczby4, i) == i)
+                if (row.IndexOfAny(liczby, i) == i)
                 {
-                    number += row[i];
-                    i++;
-                    equasionopen = false;
-                    while (row.IndexOfAny(liczby4, i) == i)
+                    while (row.IndexOfAny(liczby, i) == i)
                     {
                         number += row[i];
-                        i += 1;
+                        i++;
                     }
                     i--;
-                    if (divide && double.Parse(number) == 0 || numbertaken)
-                    {
-                        throw new InvalidEquasion("Coś jest źle z równaniem liczba");
-                    }
-                    if (minus)
-                    {
-                        elements.Add(new typ(typy.LICZBA, '-' + number));
-                        r += "-" + number + " ";
-                    }
-                    else
-                    {
-                        elements.Add(new typ(typy.LICZBA, number));
-                        r += number + " ";
-                    }
+                    if (isDiv && double.Parse(number) == 0 || numIsT || number == "," || number == ".")
+                        throw new EquasionException("Coś jest źle z równaniem  ");
 
-                 
+                    elements.Add(new typ(typy.LICZBA, minus + number));
+                    r += minus + number + " ";
                     number = "";
-                    minus = false;
-                    divide = false;
-                    endof = false;
-                    numbertaken = true;
-                    equasionopen = false;
-                    ischaracter = null;
+                    numbers();
                     continue;
-
                 }
 
-                //////////////////////////////////////////////////
-
-
-                if (row.IndexOfAny(znaki4, i) == i)
+                if (row.IndexOfAny(znaki, i) == i)
                 {
-                    if (ischaracter != null || minus)
-                    {
-                        throw new InvalidEquasion("Coś jest źle z równaniem znak");
-                    }
-
-
+                    if (!numIsT || minus == "-" || eqIsOpen)
+                        throw new EquasionException("Coś jest źle z równaniem znak");
 
                     if (row[i] == '^')
-                    {
-                        ischaracter = new typ(typy.POTENGA, row[0].ToString());
-                    }
+                        ischaracter = new typ(typy.POTENGA, row[i].ToString());
                     else
                     {
                         if (row[i].ToString() == "/")
-                            divide = true;
+                            isDiv = true;
                         ischaracter = new typ(typy.ZNAK, row[i].ToString());
-
                     }
                     r += row[i] + " ";
-                    endof = true;
-
-                  
-
                     typ z = null;
 
-                    if (characters[eqcounter].Count > 0)
-                        z = characters[eqcounter].Pop();
 
-                    if (z != null)
+                    if (ischaracter.value == "^")
                     {
-                        if (ischaracter.value == "+" || ischaracter.value == "-")
+                        while (characters[eqCoun].Count > 0)
                         {
-                            elements.Add(z);
-                            z = null;
-                        }
-                        if (ischaracter.value == "*" || ischaracter.value == "/")
-                        {
-                            if (z.value == "*" || z.value == "/" || z.value == "^")
-                            {
-                                elements.Add(z);
-                                z = null;
-                            }
-                        }
-                        if (ischaracter.value == "^")
-                        {
+                            z = characters[eqCoun].Pop();
                             if (z.value == "^")
                             {
                                 elements.Add(z);
-                                z = null;
+                            }
+                            else
+                            {
+                                characters[eqCoun].Push(z);
+                                break;
                             }
                         }
                     }
 
-                    if (z != null)
+                    if (ischaracter.value == "*" || ischaracter.value == "/")
                     {
-                        characters[eqcounter].Push(z);
+                        while (characters[eqCoun].Count > 0)
+                        {
+                            z = characters[eqCoun].Pop();
+                            if (z.value == "^" || z.value == "^" || z.value == "^")
+                            {
+                                elements.Add(z);
+                            }
+                            else
+                            {
+                                characters[eqCoun].Push(z);
+                                break;
+                            }
+                        }
                     }
 
-                    characters[eqcounter].Push(ischaracter);
-                    numbertaken = false;
-
+                    if (ischaracter.value == "+" || ischaracter.value == "-")
+                    {
+                        while (characters[eqCoun].Count > 0)
+                        {
+                            z = characters[eqCoun].Pop();
+                            if (z.value == "^" || z.value == "*" || z.value == "/" || z.value == "-" || z.value == "+")
+                            {
+                                elements.Add(z);
+                            }
+                            else
+                            {
+                                characters[eqCoun].Push(z);
+                                break;
+                            }
+                        }
+                    }
+                    characters[eqCoun].Push(ischaracter);
+                    numIsT = false;
                     continue;
                 }
-                ///////////////////////////////////////////
 
-
-
-
-
-                if (row.Length >= 4)
+                if (row.Length >= i + 5)
                 {
-                    ss = row.Substring(i, 4);
-                    if (ss == "abs(" || ss == "cos(" || ss == "sin(" || ss == "tan(" || ss == "exp(" || ss == "log(")
+                    temp = row.Substring(i, 4);
+                    if (temp == "abs(" || temp == "cos(" || temp == "sin(" || temp == "tan(" || temp == "exp(" || temp == "log(")
                     {
-                        ss = ss.Substring(0, 3);
-                        expressions.Push(new typ(typy.WYRAZENIE, ss));
-                       
+                        temp = minus + temp.Substring(0, 3);
+                        expresCounts.Push(new typ(typy.WYRAZENIE, temp));
+                        r += temp + " ( ";
                         i += 3;
-
-                        r += ss + " ( ";
-
-                        numbertaken = false;
-                        ischaracter = null;
-                        equasionopen = true;
-                        eqcounter++;
-                        expression++;
-                        if (characters.Count <= eqcounter)
-                        {
-                            characters.Add(new Stack<typ>());
-                        }
-                       
-
+                        equasions();
                         continue;
                     }
-                }
-
-                else if (row.Length >= 5)
-                {
-                    ss = row.Substring(i, 5);
-                    if (ss == "sqrt(" || ss == "cosh(" || ss == "sinh(" || ss == "tanh(" || ss == "asin(" || ss == "acos(" || ss == "atan(")
+                    temp = row.Substring(i, 5);
+                    if (temp == "sqrt(" || temp == "cosh(" || temp == "sinh(" || temp == "tanh(" || temp == "asin(" || temp == "acos(" || temp == "atan(")
                     {
-                        ss = ss.Substring(0, 4);
-                        expressions.Push(new typ(typy.WYRAZENIE, ss));
-
+                        temp = minus + temp.Substring(0, 4);
+                        expresCounts.Push(new typ(typy.WYRAZENIE, temp));
+                        r += temp + " ( ";
                         i += 4;
-                        r += ss + " ( ";
-                        numbertaken = false;
-                        ischaracter = null;
-                        equasionopen = true;
-                        eqcounter++;
-                        expression++;
-                        if (characters.Count <= eqcounter)
-                        {
-                            characters.Add(new Stack<typ>());
-                        }
-                       
-
+                        equasions();
                         continue;
                     }
                 }
-
-
-
-                ///////////////////////////////////////////
 
                 if (row[i] == '(')
                 {
-                    r +="( ";
-                    eqcounter++;
-                    if (characters.Count <= eqcounter)
+                    r += "( ";
+                    eqCoun++;
+                    if (characters.Count <= eqCoun)
                     {
                         characters.Add(new Stack<typ>());
                     }
-                    expressions.Push(new typ(typy.NAWIAS, "("));
-                  
-
-                    equasionopen = true;
+                    expresCounts.Push(new typ(typy.NAWIAS, "("));
+                    eqIsOpen = true;
                     continue;
                 }
-
-                ///////////////////////////////////////////
 
                 if (row[i] == ')')
                 {
                     r += ") ";
-                    if (!numbertaken)
+                    if (!numIsT || expresCounts.Count <= 0)
+                        throw new EquasionException("Coś jest źle z równaniem nawias zamykającym");
+
+                    typ t = expresCounts.Pop();
+                    while (characters[eqCoun].Count != 0)
                     {
-                        throw new InvalidEquasion("Coś jest źle z równaniem nawias zam");
+                        elements.Add(characters[eqCoun].Pop());
                     }
-                    typ t = expressions.Pop();
+                    eqCoun--;
                     if (t.typ_of == typy.WYRAZENIE)
                     {
-
-                        while (characters[eqcounter].Count != 0)
-                        {
-                            elements.Add(characters[eqcounter].Pop());
-                        }
-                        expression--;
-                        eqcounter--;                       
+                        expresCount--;
                         elements.Add(t);
-
                     }
-                    else
-                    {
-
-                        while (characters[eqcounter].Count != 0)
-                        {
-                            elements.Add(characters[eqcounter].Pop());
-                        }
-                       
-                        eqcounter--;
-                    }
-                   
-
                     continue;
+
                 }
-                throw new InvalidEquasion("równanie ma niepoprawne znaki koniec" + row);
+                throw new EquasionException("równanie ma niepoprawne znaki w miejscu: " + i);
             }
 
-            while (characters[eqcounter].Count != 0)
+            if (eqCoun != 0 || !numIsT || isDiv)
             {
-                elements.Add(characters[eqcounter].Pop());
+                throw new EquasionException("Coś jest źle z równaniem brak nawiasu lub za durza ilość, na końcu +,-,*,/,^");
             }
 
-            if (eqcounter != 0 || endof || divide || !numbertaken)
+            while (characters[eqCoun].Count != 0)
             {
-                throw new InvalidEquasion("Coś jest źle z równaniem po koncu");
+                elements.Add(characters[eqCoun].Pop());
             }
-
-
-
-            for (int i = 0; i < elements.Count; i++)
-            {
-                if (elements[i].value == "")
-                {
-                    elements.RemoveAt(i);
-                }
-                if (elements[i].value == "PI")
-                {
-                    elements[i] = new typ(typy.PI, Math.PI.ToString());
-                }
-                if (elements[i].value == "-PI")
-                {
-                    elements[i] = new typ(typy.PI, "-" + Math.PI.ToString());
-                }
-            }
-
 
             return elements;
         }
 
-
-
-
         void calculate_unnown(double nie, List<typ> elements)
         {
-            if (elements != null)
+            List<typ> backup = deepcopy(elements);
+            for (int i = 0; i < elements.Count; i++)
             {
-                List<typ> backup = deepcopy(elements);
-                for (int i = 0; i < elements.Count; i++)
+                if (elements[i].typ_of == typy.X)
                 {
-                    if (elements[i].typ_of == typy.X)
-                    {
-                        if (elements[i].value == "-x")
-                            backup[i] = new typ(typy.LICZBA, '-' + nie.ToString());
-                        else
-                            backup[i] = new typ(typy.LICZBA, nie.ToString());
-                    }
+                    if (elements[i].value == "-x")
+                        backup[i] = new typ(typy.LICZBA, '-' + nie.ToString());
+                    else
+                        backup[i] = new typ(typy.LICZBA, nie.ToString());
                 }
-                Console.WriteLine(Calculate(backup));
-
             }
-            else
-            {
-                throw new InvalidEquasion("Coś jest źle z obliczaniem x");
-            }
+            Console.WriteLine(Calculate(backup));
         }
 
         void calculate_unnown_range(double min, double max, int ammount, List<typ> elements)
         {
-            if (max < min)
-            {
-                double m = max;
-                max = min;
-                min = m;
-            }
+            List<typ> backup = deepcopy(elements);
+            double am = (max - min) / (ammount - 1);
 
-           
-            if (elements != null)
+            for (double i = 0; i < ammount; i++)
             {
-                List<typ> backup = deepcopy(elements);
-                double am = (max - min) / (ammount - 1);
 
-                for (double i = 0; i < ammount; i++)
+                for (int j = 0; j < elements.Count; j++)
                 {
-
-                    for (int j = 0; j < elements.Count; j++)
+                    if (elements[j].typ_of == typy.X)
                     {
-                        if (elements[j].typ_of == typy.X)
-                        {
-                            if (elements[j].value == "-x")
-                                backup[j] = new typ(typy.LICZBA, '-' + min.ToString());
-                            else
-                                backup[j] = new typ(typy.LICZBA, min.ToString());
-                        }
+                        if (elements[j].value == "-x")
+                            backup[j] = new typ(typy.LICZBA, '-' + min.ToString());
+                        else
+                            backup[j] = new typ(typy.LICZBA, min.ToString());
                     }
-                    Console.WriteLine( "{0} => {1}",min, Calculate(backup));
-
-                    //string x = string.Format("\"x\" : {0}", string.Format("{0:0.0#########################################}", min)).Replace(',', '.');
-                    //string y = string.Format(" \"y\" : {0} ", Calculate(backup)).Replace(',', '.');
-                    
-                    min = min + am;
                 }
-                
-            }
-            else
-            {
-                throw new InvalidEquasion("Coś jest źle z obliczaniem x");
+                Console.WriteLine("{0} => {1}", min, Calculate(backup));
+                min += am;
             }
         }
 
         string Calculate(List<typ> elements)
         {
-            if (elements != null)
+            double typ1, typ2;
+            Stack<typ> equasion = new Stack<typ>();
+
+            for (int i = 0; i < elements.Count; i++)
             {
-                double typ1, typ2;
-                Stack<typ> equasion = new Stack<typ>();
-
-                for (int i = 0; i < elements.Count; i++)
+                if (elements[i].typ_of == typy.LICZBA || elements[i].typ_of == typy.X || elements[i].typ_of == typy.PI)
                 {
-                    if (elements[i].typ_of == typy.LICZBA || elements[i].typ_of == typy.X || elements[i].typ_of == typy.PI)
-                    {
-                        equasion.Push(elements[i]);
-                    }
-                    else if (elements[i].typ_of == typy.ZNAK)
-                    {
-
-                        if (equasion.Count() >= 2 && double.TryParse(equasion.Pop().value, out typ1) && double.TryParse(equasion.Pop().value, out typ2))
-                            equasion.Push(new typ(typy.LICZBA, calculatesigns(typ2, typ1, elements[i].value)));
-                    }
-                    else if (elements[i].typ_of == typy.WYRAZENIE)
-                    {
-
-                        if (equasion.Count() >= 1 && double.TryParse(equasion.Pop().value, out typ1))
-                            equasion.Push(new typ(typy.LICZBA, calculateexpressions(typ1, elements[i].value)));
-
-                    }
-                    else if (elements[i].typ_of == typy.POTENGA)
-                    {
-
-                        if (equasion.Count() >= 2 && double.TryParse(equasion.Pop().value, out typ1) && double.TryParse(equasion.Pop().value, out typ2))
-                            equasion.Push(new typ(typy.LICZBA, Math.Pow(typ2, typ1).ToString()));
-                    }
+                    equasion.Push(elements[i]);
                 }
-                CultureInfo culture = CultureInfo.CreateSpecificCulture("en-CA");
-
-                return string.Format("{0:0.0#########################################}", double.Parse(equasion.Pop().value));
-
+                else if (elements[i].typ_of == typy.ZNAK)
+                {
+                    if (equasion.Count() >= 2 && double.TryParse(equasion.Pop().value, out typ1) && double.TryParse(equasion.Pop().value, out typ2))
+                        equasion.Push(new typ(typy.LICZBA, calculateS(typ2, typ1, elements[i].value)));
+                }
+                else if (elements[i].typ_of == typy.WYRAZENIE)
+                {
+                    if (equasion.Count() >= 1 && double.TryParse(equasion.Pop().value, out typ1))
+                        equasion.Push(new typ(typy.LICZBA, calculateexpresCounts(typ1, elements[i].value)));
+                }
+                else if (elements[i].typ_of == typy.POTENGA)
+                {
+                    if (equasion.Count() >= 2 && double.TryParse(equasion.Pop().value, out typ1) && double.TryParse(equasion.Pop().value, out typ2))
+                        equasion.Push(new typ(typy.LICZBA, Math.Pow(typ2, typ1).ToString()));
+                }
             }
-            return "null";
+            CultureInfo culture = CultureInfo.CreateSpecificCulture("en-CA");
+
+            return string.Format("{0:0.0#########################################}", double.Parse(equasion.Pop().value));
         }
 
-        void wyswietl_gotowe(List<typ> elements)
+        void show_ready(List<typ> elements)
         {
-            if (elements != null)
-            {
-                StringBuilder stringBuilder = new StringBuilder();
+            StringBuilder stringBuilder = new StringBuilder();
 
-                for (int i = 0; i < elements.Count; i++)
-                {
-                    stringBuilder.Append(elements[i].value);
-                    stringBuilder.Append(" ");
-                }
-                Console.WriteLine(stringBuilder.ToString());
-            }
+            for (int i = 0; i < elements.Count; i++)
+                stringBuilder.Append(elements[i].value + " ");
+
+            Console.WriteLine(stringBuilder.ToString());
         }
 
-        char[] znaki2 = { '+', '/', '*', '^', '-' };
-        char[] liczby2 = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'x' };
-        char[] liczby3 = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };
+        char[] liczby2 = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };
 
-        void odwroc_rownanie2(string onp)
+        void revers(string onp)
         {
             if (onp != null)
             {
@@ -959,11 +418,11 @@ namespace ConsoleApp1
 
                 for (int i = 0; i < elementy.Length; i++)
                 {
-                    if (elementy[i] == "PI" || elementy[i].IndexOfAny(liczby2) == 0 || elementy[i].IndexOfAny(liczby3) == 1)
+                    if (elementy[i] == "PI" || elementy[i] == "x" || elementy[i].IndexOfAny(liczby2) == 0 && elementy[i].Length > 0)
                     {
                         store.Push(elementy[i]);
                     }
-                    else if (elementy[i].IndexOfAny(znaki2) == 0)
+                    else if (elementy[i].IndexOfAny(znaki) == 0)
                     {
                         typ1 = store.Pop();
                         typ2 = store.Pop();
@@ -1046,38 +505,43 @@ namespace ConsoleApp1
             }
         }
 
-        string calculatesigns(double o, double t, string znak)
+        string calculateS(double o, double t, string znak)
         {
             switch (znak)
             {
                 case "-": return (o - t).ToString();
                 case "+": return (o + t).ToString();
                 case "*": return (o * t).ToString();
-                case "/": if (t == 0) throw new InvalidEquasion("Coś jest źle z równaniem dziel przez 0"); return (o / t).ToString();
+                case "/": if (t == 0) throw new EquasionException("Coś jest źle z równaniem dziel przez 0"); return (o / t).ToString();
             }
             return "";
         }
 
-        string calculateexpressions(double o, string wyrazenie)
+        string calculateexpresCounts(double o, string w)
         {
-            switch (wyrazenie)
+            if (w.Contains("-"))
             {
-                case "cos": return Math.Cos(o).ToString();
-                case "sin": return Math.Sin(o).ToString();
-                case "abs": return Math.Abs(o).ToString();
-                case "tan": return Math.Tan(o).ToString();
-                case "exp": return Math.Exp(o).ToString();
-                case "log": return Math.Log(o).ToString();
-                case "sqrt": return Math.Sqrt(o).ToString();
-                case "cosh": return Math.Cosh(o).ToString();
-                case "sinh": return Math.Sinh(o).ToString();
-                case "tanh": return Math.Tanh(o).ToString();
-                case "asin": return Math.Asin(o).ToString();
-                case "acos": return Math.Acos(o).ToString();
-                case "atan": return Math.Atan(o).ToString();
-
+                o *= -1;
+                w = w.Substring(1, w.Length - 1);
+            }
+            switch (w)
+            {
+                case "cos": return (Math.Cos(o)).ToString();
+                case "sin": return (Math.Sin(o)).ToString();
+                case "abs": return (Math.Abs(o)).ToString();
+                case "tan": return (Math.Tan(o)).ToString();
+                case "exp": return (Math.Exp(o)).ToString();
+                case "log": return (Math.Log(o)).ToString();
+                case "sqrt": return (Math.Sqrt(o)).ToString();
+                case "cosh": return (Math.Cosh(o)).ToString();
+                case "sinh": return (Math.Sinh(o)).ToString();
+                case "tanh": return (Math.Tanh(o)).ToString();
+                case "asin": return (Math.Asin(o)).ToString();
+                case "acos": return (Math.Acos(o)).ToString();
+                case "atan": return (Math.Atan(o)).ToString();
             }
             return "";
         }
     }
+
 }

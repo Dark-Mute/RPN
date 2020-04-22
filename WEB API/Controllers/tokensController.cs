@@ -18,10 +18,5 @@ namespace serwer.Controllers
             RPN rPN = new RPN();
             return rPN.formula(formula);
         }
-
-       
-
-
-
     }
 }
