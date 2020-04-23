@@ -46,7 +46,7 @@ namespace serwer
             return model;
         }
 
-     public Models.Imodel formula(string row)
+        public Models.Imodel formula(string row)
         {
             List<string> infix;
            
@@ -152,6 +152,14 @@ namespace serwer
 
         List<typ> FindType(string row, double unnown, out List<string> infix)
         {
+            Dictionary<string, int> priority = new Dictionary<string, int>()
+            {
+                {"-",1},
+                {"+",1},
+                {"*",2},
+                {"/",2},
+                {"^",3}
+            };
             List<typ> elements = new List<typ>();
             List<Stack<typ>> characters = new List<Stack<typ>>();
             Stack<typ> expresCounts = new Stack<typ>();
@@ -249,55 +257,21 @@ namespace serwer
                     infix.Add(row[i].ToString());
                     typ z = null;
 
+                    int p1, p2;
 
-                    if (ischaracter.value == "^")
+                    priority.TryGetValue(ischaracter.value, out p1);
+                    while (characters[eqCoun].Count > 0)
                     {
-                        while (characters[eqCoun].Count > 0)
+                        z = characters[eqCoun].Pop();
+                        priority.TryGetValue(z.value, out p2);
+                        if (p1 <= p2)
                         {
-                            z = characters[eqCoun].Pop();
-                            if (z.value == "^")
-                            {
-                                elements.Add(z);
-                            }
-                            else
-                            {
-                                characters[eqCoun].Push(z);
-                                break;
-                            }
+                            elements.Add(z);
                         }
-                    }
-
-                    if (ischaracter.value == "*" || ischaracter.value == "/")
-                    {
-                        while (characters[eqCoun].Count > 0)
+                        else
                         {
-                            z = characters[eqCoun].Pop();
-                            if (z.value == "^" || z.value == "^" || z.value == "^")
-                            {
-                                elements.Add(z);
-                            }
-                            else
-                            {
-                                characters[eqCoun].Push(z);
-                                break;
-                            }
-                        }
-                    }
-
-                    if (ischaracter.value == "+" || ischaracter.value == "-")
-                    {
-                        while (characters[eqCoun].Count > 0)
-                        {
-                            z = characters[eqCoun].Pop();
-                            if (z.value == "^" || z.value == "*" || z.value == "/" || z.value == "-" || z.value == "+")
-                            {
-                                elements.Add(z);
-                            }
-                            else
-                            {
-                                characters[eqCoun].Push(z);
-                                break;
-                            }
+                            characters[eqCoun].Push(z);
+                            break;
                         }
                     }
                     characters[eqCoun].Push(ischaracter);
@@ -383,14 +357,14 @@ namespace serwer
                 List<typ> backup = deepcopy(elements);
                 for (int i = 0; i < elements.Count; i++)
                 {
-                    if (elements[i].typ_of == typy.X)
-                    {
-                        if (elements[i].value == "-x")
-                            backup[i] = new typ(typy.LICZBA, '-' + nie.ToString());
-                        else
-                            backup[i] = new typ(typy.LICZBA, nie.ToString());
-                    }
+                if (elements[i].typ_of == typy.X)
+                {
+                    if (elements[i].value == "-x")
+                        backup[i] = new typ(typy.LICZBA, '-' + nie.ToString());
+                    else
+                        backup[i] = new typ(typy.LICZBA, nie.ToString());
                 }
+            }
                 return Calculate(backup);                 
         }
       
@@ -403,17 +377,16 @@ namespace serwer
 
                 for (double i = 0; i < ammount; i++)
                 {
-
                     for (int j = 0; j < elements.Count; j++)
                     {
-                        if (elements[j].typ_of == typy.X)
-                        {
-                            if (elements[j].value == "-x")
-                                backup[j] = new typ(typy.LICZBA, '-' + min.ToString());
-                            else
-                                backup[j] = new typ(typy.LICZBA, min.ToString());
-                        }
+                    if (elements[j].typ_of == typy.X)
+                    {
+                        if (elements[j].value == "-x")
+                            backup[j] = new typ(typy.LICZBA, '-' + min.ToString());
+                        else
+                            backup[j] = new typ(typy.LICZBA, min.ToString());
                     }
+                }
                     results.Add(new Models.Range(min, double.Parse(Calculate(backup))));
                     min = min + am;
                 }

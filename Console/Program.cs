@@ -31,6 +31,8 @@ namespace ConsoleApp1
         PI
     };
 
+   
+
     class typ
     {
         public typ(typy t, string v)
@@ -98,6 +100,14 @@ namespace ConsoleApp1
 
         List<typ> FindType(string row, double unnown, ref string r)
         {
+            Dictionary<string, int> priority = new Dictionary<string, int>()
+            {
+                {"-",1},
+                {"+",1},
+                {"*",2},
+                {"/",2},
+                {"^",3}
+            };
             List<typ> elements = new List<typ>();
             List<Stack<typ>> characters = new List<Stack<typ>>();
             Stack<typ> expresCounts = new Stack<typ>();
@@ -194,55 +204,21 @@ namespace ConsoleApp1
                     r += row[i] + " ";
                     typ z = null;
 
+                    int p1, p2;
 
-                    if (ischaracter.value == "^")
+                    priority.TryGetValue(ischaracter.value, out p1);
+                    while (characters[eqCoun].Count > 0)
                     {
-                        while (characters[eqCoun].Count > 0)
+                        z = characters[eqCoun].Pop();
+                        priority.TryGetValue(z.value, out p2);
+                        if (p1 <= p2)
                         {
-                            z = characters[eqCoun].Pop();
-                            if (z.value == "^")
-                            {
-                                elements.Add(z);
-                            }
-                            else
-                            {
-                                characters[eqCoun].Push(z);
-                                break;
-                            }
+                            elements.Add(z);
                         }
-                    }
-
-                    if (ischaracter.value == "*" || ischaracter.value == "/")
-                    {
-                        while (characters[eqCoun].Count > 0)
+                        else
                         {
-                            z = characters[eqCoun].Pop();
-                            if (z.value == "^" || z.value == "^" || z.value == "^")
-                            {
-                                elements.Add(z);
-                            }
-                            else
-                            {
-                                characters[eqCoun].Push(z);
-                                break;
-                            }
-                        }
-                    }
-
-                    if (ischaracter.value == "+" || ischaracter.value == "-")
-                    {
-                        while (characters[eqCoun].Count > 0)
-                        {
-                            z = characters[eqCoun].Pop();
-                            if (z.value == "^" || z.value == "*" || z.value == "/" || z.value == "-" || z.value == "+")
-                            {
-                                elements.Add(z);
-                            }
-                            else
-                            {
-                                characters[eqCoun].Push(z);
-                                break;
-                            }
+                            characters[eqCoun].Push(z);
+                            break;
                         }
                     }
                     characters[eqCoun].Push(ischaracter);
@@ -330,10 +306,10 @@ namespace ConsoleApp1
             {
                 if (elements[i].typ_of == typy.X)
                 {
-                    if (elements[i].value == "-x")
-                        backup[i] = new typ(typy.LICZBA, '-' + nie.ToString());
-                    else
-                        backup[i] = new typ(typy.LICZBA, nie.ToString());
+                     if (elements[i].value == "-x")
+                            backup[i] = new typ(typy.LICZBA, '-' + nie.ToString());
+                        else
+                            backup[i] = new typ(typy.LICZBA, nie.ToString());
                 }
             }
             Console.WriteLine(Calculate(backup));
@@ -351,12 +327,13 @@ namespace ConsoleApp1
                 {
                     if (elements[j].typ_of == typy.X)
                     {
-                        if (elements[j].value == "-x")
-                            backup[j] = new typ(typy.LICZBA, '-' + min.ToString());
-                        else
-                            backup[j] = new typ(typy.LICZBA, min.ToString());
+                         if (elements[j].value == "-x")
+                                backup[j] = new typ(typy.LICZBA, '-' + min.ToString());
+                            else
+                                backup[j] = new typ(typy.LICZBA, min.ToString());
                     }
                 }
+                
                 Console.WriteLine("{0} => {1}", min, Calculate(backup));
                 min += am;
             }
