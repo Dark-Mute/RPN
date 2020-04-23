@@ -115,7 +115,7 @@ namespace ConsoleApp1
             int eqCoun = 0, expresCount = 0;
             string number = "", minus = "", temp;
             typ ischaracter = null;
-            bool isDiv = false, numIsT = false, eqIsOpen = true;
+            bool isDiv = false, numIsT = false, eqIsOpen = true,minusnot = false;
 
             void numbers()
             {
@@ -142,6 +142,8 @@ namespace ConsoleApp1
             {
                 if (row[i] == '-' && eqIsOpen)
                 {
+                    if(minusnot)
+                        throw new EquasionException("pierwiastek nie może być ujemny");
                     minus = "-";
                     eqIsOpen = false;
                     continue;
@@ -241,6 +243,8 @@ namespace ConsoleApp1
                     temp = row.Substring(i, 5);
                     if (temp == "sqrt(" || temp == "cosh(" || temp == "sinh(" || temp == "tanh(" || temp == "asin(" || temp == "acos(" || temp == "atan(")
                     {
+                        if (temp == "sqrt(")
+                            minusnot = true;
                         temp = minus + temp.Substring(0, 4);
                         expresCounts.Push(new typ(typy.WYRAZENIE, temp));
                         r += temp + " ( ";
@@ -509,7 +513,7 @@ namespace ConsoleApp1
                 case "tan": return (Math.Tan(o)).ToString();
                 case "exp": return (Math.Exp(o)).ToString();
                 case "log": return (Math.Log(o)).ToString();
-                case "sqrt": return (Math.Sqrt(o)).ToString();
+                case "sqrt": if(o<0) throw new EquasionException("pierwiastek nie może być ujemny"); return (Math.Sqrt(o)).ToString();
                 case "cosh": return (Math.Cosh(o)).ToString();
                 case "sinh": return (Math.Sinh(o)).ToString();
                 case "tanh": return (Math.Tanh(o)).ToString();

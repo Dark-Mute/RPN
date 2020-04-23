@@ -168,7 +168,7 @@ namespace serwer
             int eqCoun = 0, expresCount = 0;
             string number = "", minus = "", temp;
             typ ischaracter = null;
-            bool isDiv = false, numIsT = false, eqIsOpen = true;
+            bool isDiv = false, numIsT = false, eqIsOpen = true,minusnot=false;
 
             void numbers()
             {
@@ -195,6 +195,8 @@ namespace serwer
             {
                 if (row[i] == '-' && eqIsOpen)
                 {
+                    if(minusnot)
+                        throw new EquasionException("pierwiastek nie może być ujemny");
                     minus = "-";
                     eqIsOpen = false;
                     continue;
@@ -294,6 +296,8 @@ namespace serwer
                     temp = row.Substring(i, 5);
                     if (temp == "sqrt(" || temp == "cosh(" || temp == "sinh(" || temp == "tanh(" || temp == "asin(" || temp == "acos(" || temp == "atan(")
                     {
+                        if (temp == "sqrt(")
+                            minusnot = true;
                         temp = minus + temp.Substring(0, 4);
                         expresCounts.Push(new typ(typy.WYRAZENIE, temp));
                         infix.Add(temp);
