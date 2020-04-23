@@ -319,7 +319,7 @@ namespace ConsoleApp1
         {
             List<typ> backup = deepcopy(elements);
             double am = (max - min) / (ammount - 1);
-
+            am = Math.Round(am, 15);
             for (double i = 0; i < ammount; i++)
             {
 
@@ -334,7 +334,7 @@ namespace ConsoleApp1
                     }
                 }
                 
-                Console.WriteLine("{0} => {1}", min, Calculate(backup));
+                Console.WriteLine("{0} => {1}", Math.Round(min, 10), Calculate(backup));
                 min += am;
             }
         }

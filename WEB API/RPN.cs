@@ -373,24 +373,24 @@ namespace serwer
             List<Models.Range> results = new List<Models.Range>();
          
                 List<typ> backup = deepcopy(elements);
-                double am = (max - min) / (ammount - 1);
-
+                double am = (max - min) / (ammount-1);
+                am = Math.Round(am, 15);
                 for (double i = 0; i < ammount; i++)
                 {
+                
                     for (int j = 0; j < elements.Count; j++)
                     {
-                    if (elements[j].typ_of == typy.X)
-                    {
-                        if (elements[j].value == "-x")
-                            backup[j] = new typ(typy.LICZBA, '-' + min.ToString());
-                        else
-                            backup[j] = new typ(typy.LICZBA, min.ToString());
+                        if (elements[j].typ_of == typy.X)
+                        {
+                            if (elements[j].value == "-x")
+                                backup[j] = new typ(typy.LICZBA, '-' + min.ToString());
+                            else
+                                backup[j] = new typ(typy.LICZBA, min.ToString());
+                        }
                     }
-                }
-                    results.Add(new Models.Range(min, double.Parse(Calculate(backup))));
+                    results.Add(new Models.Range(Math.Round(min, 10), double.Parse(Calculate(backup))));
                     min = min + am;
                 }
-            
             return results;
         }
 
