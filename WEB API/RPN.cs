@@ -2,32 +2,32 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace serwer
 {
-    enum typy
+ enum elementTypes
     {
-        LICZBA,
-        ZNAK,
+        NUMBER,
+        SIGN,
         X,
-        WYRAZENIE,
-        POTENGA,
-        NAWIAS,
-        PI
+        EXPRESSION,
+        POWER,
+        BRACKET
     };
 
-    class typ
+    class elementType
     {
-        public typ(typy t, string v)
+        public elementType(elementTypes t, string v)
         {
-            typ_of = t;
+            elementtype = t;
             value = v;
         }
         public string value { get; private set; }
-        public typy typ_of { get; private set; }
+        public elementTypes elementtype { get; private set; }
     }
 
     class EquasionException : Exception
@@ -37,38 +37,51 @@ namespace serwer
     }
 
     class RPN
-    { 
-        public Models.Error errorM(string ex)
+    {
+        Dictionary<string, int> priority = new Dictionary<string, int>()
         {
-            Models.Error model = new Models.Error();
-            model.status = "error";
-            model.message = ex;
-            return model;
+            {"-",1},
+            {"+",1},
+            {"*",2},
+            {"/",2},
+            {"^",3}
+        };
+        char[] signs = { '-', '+', '/', '*', '^' };
+        char[] numbers = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', ',' };
+        char[] signs2 = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };
+
+          public dynamic errorM(string ex)
+        {
+            dynamic d2 = new ExpandoObject();
+
+            d2.status = "ok";
+            d2.result = ex;
+            return d2;
         }
 
-        public Models.Imodel formula(string row)
+        public dynamic Formula(string row)
         {
             List<string> infix;
            
             try
             {
-
-                List<typ> elementynieznane = FindType(row.Replace('.', ',').Replace(' ','+'), double.NaN, out infix);
+                List<elementType> oNP = CreateONP(row.Replace('.', ',').Replace(' ','+'),  out infix);
                 List<string> s = new List<string>();
-                foreach(typ t in elementynieznane)
+                foreach(elementType t in oNP)
                 {
                     s.Add(t.value);
                 }
-                
-                Models.RokentsResult result = new Models.RokentsResult();
-                result.infix = infix.ToArray();
-                
-                result.rpn = s.ToArray();
-                
-                Models.Results model = new Models.Results();
-                model.status = "ok";
-                model.result = result;
-                return model;
+
+                dynamic d = new ExpandoObject();
+                dynamic d2 = new ExpandoObject();
+
+                d.infix = infix.ToArray();
+                d.rpn = s.ToArray();
+
+                d2.status = "ok";
+                d2.result = d;
+             
+                return d2;
             }
             catch (EquasionException iq)
             {             
@@ -81,23 +94,21 @@ namespace serwer
 
         }
 
-        public Models.Imodel formula(string row, double x)
+        public dynamic Formula(string row, double x)
         {
             StringBuilder sb = new StringBuilder();
             List<string> infix;         
             try
             {
+                List<elementType> oNP = CreateONP(row.Replace('.', ',').Replace(' ', '+'), out infix);
+                double result = CalculateUnknown(x, oNP);
 
+                dynamic d2 = new ExpandoObject();
 
-
-                List<typ> elementynieznane = FindType(row.Replace('.', ',').Replace(' ', '+'), double.NaN, out infix);
-                string result = calculate_unnown(x, elementynieznane);
-
-                Models.Results model = new Models.Results();
-                model.status = "ok";
-                model.result = double.Parse(result);
-                return model;
-
+            
+                d2.status = "ok";
+                d2.result = result;
+                return d2;
             }
             catch (EquasionException iq)
             {
@@ -110,22 +121,22 @@ namespace serwer
 
         }
 
-        public Models.Imodel formula(string row, double min, double max, int ammount)
+        public dynamic Formula(string row, double min, double max, int ammount)
         {
             List<string> infix;
-           
-           
+
             StringBuilder sb = new StringBuilder();
             try
             {
-                List<typ> elementynieznane = FindType(row.Replace('.', ',').Replace(' ', '+'), double.NaN, out infix);
-                List<Models.Range> result = calculate_unnown_range(min, max, ammount, elementynieznane);
+                List<elementType> oNP = CreateONP(row.Replace('.', ',').Replace(' ', '+'), out infix);
+                List<dynamic> result = CalculateUnknownRange(min, max, ammount, oNP);
 
-                Models.Results model = new Models.Results();
-                model.status = "ok";
-                model.result = result.ToArray();
-                return model;
+                dynamic d2 = new ExpandoObject();
 
+
+                d2.status = "ok";
+                d2.result = result.ToArray();
+                return d2;
             }
             catch (EquasionException iq)
             {
@@ -136,79 +147,65 @@ namespace serwer
                 return errorM(ex.Message);
             }
 
-        }
-        List<typ> deepcopy(List<typ> elementy)
+        }        List<elementType> Deepcopy(List<elementType> elements)
         {
-            List<typ> temp = new List<typ>();
-            for (int j = 0; j < elementy.Count; j++)
+            List<elementType> temp = new List<elementType>();
+            for (int j = 0; j < elements.Count; j++)
             {
-                temp.Add(new typ(elementy[j].typ_of, elementy[j].value));
+                temp.Add(new elementType(elements[j].elementtype, elements[j].value));
             }
             return temp;
         }
 
-        char[] znaki = { '-', '+', '/', '*', '^' };
-        char[] liczby = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', ',' };
-
-        List<typ> FindType(string row, double unnown, out List<string> infix)
+        List<elementType> CreateONP(string row, out List<string> infix)
         {
-            Dictionary<string, int> priority = new Dictionary<string, int>()
-            {
-                {"-",1},
-                {"+",1},
-                {"*",2},
-                {"/",2},
-                {"^",3}
-            };
-            List<typ> elements = new List<typ>();
-            List<Stack<typ>> characters = new List<Stack<typ>>();
-            Stack<typ> expresCounts = new Stack<typ>();
-            characters.Add(new Stack<typ>());
+            List<elementType> elements = new List<elementType>();
+            List<Stack<elementType>> characters = new List<Stack<elementType>>();
+            Stack<elementType> sincosStack = new Stack<elementType>();
+            characters.Add(new Stack<elementType>());
             infix = new List<string>();
-            int eqCoun = 0, expresCount = 0;
-            string number = "", minus = "", temp;
-            typ ischaracter = null;
-            bool isDiv = false, numIsT = false, eqIsOpen = true,minusnot=false;
+            int bracketCounter = 0, sincosCounter = 0;
+            string number = "", minus = "", tempString;
+            elementType characterTemp = null;
+            bool divide = false, umberIsTaken = false, bracketIsOpen = true;
 
             void numbers()
             {
                 minus = "";
-                isDiv = false;
-                numIsT = true;
-                eqIsOpen = false;
+                divide = false;
+                umberIsTaken = true;
+                bracketIsOpen = false;
             }
 
             void equasions()
             {
-                numIsT = false;
-                eqIsOpen = true;
+                umberIsTaken = false;
+                bracketIsOpen = true;
                 minus = "";
-                eqCoun++;
-                expresCount++;
-                if (characters.Count <= eqCoun)
+                bracketCounter++;
+                sincosCounter++;
+                if (characters.Count <= bracketCounter)
                 {
-                    characters.Add(new Stack<typ>());
+                    characters.Add(new Stack<elementType>());
                 }
             }
 
             for (int i = 0; i < row.Length; i++)
             {
-                if (row[i] == '-' && eqIsOpen)
+                if (row[i] == '-' && bracketIsOpen)
                 {
-                    if(minusnot)
-                        throw new EquasionException("pierwiastek nie może być ujemny");
                     minus = "-";
-                    eqIsOpen = false;
+                    bracketIsOpen = false;
                     continue;
                 }
 
                 if (row.Length >= i + 2 && row.Substring(i, 2) == "PI")
                 {
-                    if (numIsT)
+                    if (umberIsTaken)
                         throw new EquasionException("Coś jest źle z równaniem pi");
 
                     i += 1;
-                    elements.Add(new typ(typy.PI, minus + Math.PI.ToString()));                   
+                    elements.Add(new elementType(elementTypes.NUMBER, minus + Math.PI.ToString()));                   
                     infix.Add(minus + "PI");
                     numbers();
                     continue;
@@ -216,91 +213,89 @@ namespace serwer
 
                 if (row[i] == 'x')
                 {
-                    if (isDiv && unnown == 0 || numIsT)
+                    if (umberIsTaken)
                         throw new EquasionException("Coś jest źle z równaniem lub /0");
 
-                    elements.Add(new typ(typy.X, minus + "x"));
+                    elements.Add(new elementType(elementTypes.X, minus + "x"));
                     infix.Add(minus + "x");
                     numbers();
                     continue;
                 }
 
-                if (row.IndexOfAny(liczby, i) == i)
+                if (row.IndexOfAny(this.numbers, i) == i)
                 {
-                    while (row.IndexOfAny(liczby, i) == i)
+                    while (row.IndexOfAny(this.numbers, i) == i)
                     {
                         number += row[i];
                         i++;
                     }
                     i--;
-                    if (isDiv && double.Parse(number) == 0 || numIsT || number == "," || number == ".")
+                    if (divide && double.Parse(number) == 0 || umberIsTaken || number == "," || number.IndexOf(",") != number.LastIndexOf(","))
                         throw new EquasionException("Coś jest źle z równaniem  ");
 
-                    elements.Add(new typ(typy.LICZBA, minus + number));               
+                    elements.Add(new elementType(elementTypes.NUMBER, minus + number));               
                     infix.Add(minus + number);
                     number = "";
                     numbers();
                     continue;
                 }
 
-                if (row.IndexOfAny(znaki, i) == i)
+                if (row.IndexOfAny(signs, i) == i)
                 {
-                    if (!numIsT || minus == "-" || eqIsOpen)
+                    if (!umberIsTaken || minus == "-" || bracketIsOpen)
                         throw new EquasionException("Coś jest źle z równaniem znak");
 
                     if (row[i] == '^')
-                        ischaracter = new typ(typy.POTENGA, row[i].ToString());
+                        characterTemp = new elementType(elementTypes.POWER, row[i].ToString());
                     else
                     {
                         if (row[i].ToString() == "/")
-                            isDiv = true;
-                        ischaracter = new typ(typy.ZNAK, row[i].ToString());
+                            divide = true;
+                        characterTemp = new elementType(elementTypes.SIGN, row[i].ToString());
                     }
                     infix.Add(row[i].ToString());
-                    typ z = null;
+                    elementType z = null;
 
                     int p1, p2;
-
-                    priority.TryGetValue(ischaracter.value, out p1);
-                    while (characters[eqCoun].Count > 0)
-                    {
-                        z = characters[eqCoun].Pop();
-                        priority.TryGetValue(z.value, out p2);
-                        if (p1 <= p2)
-                        {
-                            elements.Add(z);
-                        }
-                        else
-                        {
-                            characters[eqCoun].Push(z);
-                            break;
-                        }
-                    }
-                    characters[eqCoun].Push(ischaracter);
-                    numIsT = false;
+                        priority.TryGetValue(characterTemp.value, out p1);                     
+                            while (characters[bracketCounter].Count > 0)
+                            {
+                                z = characters[bracketCounter].Pop();
+                                priority.TryGetValue(z.value, out p2);
+                                if (p1 <= p2)
+                                {
+                                    elements.Add(z);
+                                }
+                                else
+                                {
+                                    characters[bracketCounter].Push(z);
+                                    break;
+                                }
+                            }
+                    
+                    characters[bracketCounter].Push(characterTemp);
+                    umberIsTaken = false;
                     continue;
                 }
 
                 if (row.Length >= i + 5)
-                {
-                    temp = row.Substring(i, 4);
-                    if (temp == "abs(" || temp == "cos(" || temp == "sin(" || temp == "tan(" || temp == "exp(" || temp == "log(")
+                {                   
+                    tempString = row.Substring(i, 4);
+                    if (tempString == "abs(" || tempString == "cos(" || tempString == "sin(" || tempString == "tan(" || tempString == "exp(" || tempString == "log(")
                     {
-                        temp = minus + temp.Substring(0, 3);
-                        expresCounts.Push(new typ(typy.WYRAZENIE, temp));
-                        infix.Add(temp);
+                        tempString = minus + tempString.Substring(0, 3);
+                        sincosStack.Push(new elementType(elementTypes.EXPRESSION, tempString));
+                        infix.Add(tempString);
                         i += 3;
                         equasions();
                         continue;
                     }
-                    temp = row.Substring(i, 5);
-                    if (temp == "sqrt(" || temp == "cosh(" || temp == "sinh(" || temp == "tanh(" || temp == "asin(" || temp == "acos(" || temp == "atan(")
+                    tempString = row.Substring(i, 5);
+                    if (tempString == "sqrt(" || tempString == "cosh(" || tempString == "sinh(" || tempString == "tanh(" || tempString == "asin(" || tempString == "acos(" || tempString == "atan(")
                     {
-                        if (temp == "sqrt(")
-                            minusnot = true;
-                        temp = minus + temp.Substring(0, 4);
-                        expresCounts.Push(new typ(typy.WYRAZENIE, temp));
-                        infix.Add(temp);
+                        tempString = minus + tempString.Substring(0, 4);
+                        sincosStack.Push(new elementType(elementTypes.EXPRESSION, tempString));
+                        infix.Add(tempString);
                         i += 4;
                         equasions();
                         continue;
@@ -310,73 +305,75 @@ namespace serwer
                 if (row[i] == '(')
                 {
                   
-                    eqCoun++;
-                    if (characters.Count <= eqCoun)
+                    bracketCounter++;
+                    if (characters.Count <= bracketCounter)
                     {
-                        characters.Add(new Stack<typ>());
+                        characters.Add(new Stack<elementType>());
                     }
-                    expresCounts.Push(new typ(typy.NAWIAS, "("));
-                    eqIsOpen = true;
+                    sincosStack.Push(new elementType(elementTypes.BRACKET, "("));
+                    bracketIsOpen = true;
                     continue;
                 }
 
                 if (row[i] == ')')
                 {
                     
-                    if (!numIsT || expresCounts.Count <= 0)
+                    if (!umberIsTaken || sincosStack.Count <= 0)
                         throw new EquasionException("Coś jest źle z równaniem nawias zamykającym");
 
-                    typ t = expresCounts.Pop();
-                    while (characters[eqCoun].Count != 0)
+                    elementType t = sincosStack.Pop();
+                    while (characters[bracketCounter].Count != 0)
                     {
-                        elements.Add(characters[eqCoun].Pop());
+                        elements.Add(characters[bracketCounter].Pop());
                     }
-                    eqCoun--;
-                    if (t.typ_of == typy.WYRAZENIE)
+                    bracketCounter--;
+                    if (t.elementtype == elementTypes.EXPRESSION)
                     {
-                        expresCount--;
+                        sincosCounter--;
                         elements.Add(t);
                     }
                     continue;
 
                 }
-                throw new EquasionException("równanie ma niepoprawne znaki w miejscu: " + i + " " + row);
+                throw new EquasionException("równanie ma niepoprawne znaki w miejscu zaznaczonym < błąd >: " + row.Substring(0,i) + "< " +row[i] + " >" + row.Substring(i+1));
             }
 
-            if (eqCoun != 0 || !numIsT || isDiv)
+            if (bracketCounter != 0 || !umberIsTaken || divide)
             {
                 throw new EquasionException("Coś jest źle z równaniem brak nawiasu lub za durza ilość, na końcu +,-,*,/,^");
             }
 
-            while (characters[eqCoun].Count != 0)
+            while (characters[bracketCounter].Count != 0)
             {
-                elements.Add(characters[eqCoun].Pop());
+                elements.Add(characters[bracketCounter].Pop());
             }
 
             return elements;
         }
-
-        string calculate_unnown(double nie, List<typ> elements)
+        double CalculateUnknown(double x, List<elementType> elements)
         {
-                List<typ> backup = deepcopy(elements);
+                List<elementType> backup = Deepcopy(elements);
                 for (int i = 0; i < elements.Count; i++)
                 {
-                if (elements[i].typ_of == typy.X)
-                {
-                    if (elements[i].value == "-x")
-                        backup[i] = new typ(typy.LICZBA, '-' + nie.ToString());
-                    else
-                        backup[i] = new typ(typy.LICZBA, nie.ToString());
+                    if (elements[i].elementtype == elementTypes.X)
+                    {
+                        if (elements[i].value == "-x")
+                            backup[i] = new elementType(elementTypes.NUMBER, '-' + x.ToString());
+                        else
+                            backup[i] = new elementType(elementTypes.NUMBER, x.ToString());
+                    }
                 }
-            }
-                return Calculate(backup);                 
+            double temp = Calculate(backup);
+            if (double.IsNaN(temp))
+                throw new EquasionException("Wynik jest zbyt wysoki");
+            return temp;                 
         }
-      
-        List<Models.Range> calculate_unnown_range(double min, double max, int ammount, List<typ> elements)
+        List<dynamic> CalculateUnknownRange(double min, double max, int ammount, List<elementType> elements)
         {
-            List<Models.Range> results = new List<Models.Range>();
-         
-                List<typ> backup = deepcopy(elements);
+                dynamic d = new ExpandoObject();
+                List<dynamic> results = new List<dynamic>();
+              
+                List<elementType> backup = Deepcopy(elements);
                 double am = (max - min) / (ammount-1);
                 am = Math.Round(am, 15);
                 for (double i = 0; i < ammount; i++)
@@ -384,53 +381,64 @@ namespace serwer
                 
                     for (int j = 0; j < elements.Count; j++)
                     {
-                        if (elements[j].typ_of == typy.X)
+                        if (elements[j].elementtype == elementTypes.X)
                         {
                             if (elements[j].value == "-x")
-                                backup[j] = new typ(typy.LICZBA, '-' + min.ToString());
+                                backup[j] = new elementType(elementTypes.NUMBER, '-' + min.ToString());
                             else
-                                backup[j] = new typ(typy.LICZBA, min.ToString());
+                                backup[j] = new elementType(elementTypes.NUMBER, min.ToString());
                         }
                     }
-                    results.Add(new Models.Range(Math.Round(min, 10), double.Parse(Calculate(backup))));
+                    double temp = Calculate(backup);
+                    d.x = Math.Round(min, 10);
+                    if (double.IsNaN(temp))
+                    {                   
+                        d.y = "Wynik jest zbyt wysoki";
+                    }
+                    else
+                    {
+                        d.y = temp;
+                    }
+                   
+                    results.Add(d);
+                    d = new ExpandoObject();
                     min = min + am;
                 }
+            
             return results;
         }
-
-        string Calculate(List<typ> elements)
+        double Calculate(List<elementType> elements)
         {
             double typ1, typ2;
-            Stack<typ> equasion = new Stack<typ>();
+            Stack<elementType> equasion = new Stack<elementType>();
 
             for (int i = 0; i < elements.Count; i++)
             {
-                if (elements[i].typ_of == typy.LICZBA || elements[i].typ_of == typy.X || elements[i].typ_of == typy.PI)
+                if (elements[i].elementtype == elementTypes.NUMBER || elements[i].elementtype == elementTypes.X)
                 {
                     equasion.Push(elements[i]);
                 }
-                else if (elements[i].typ_of == typy.ZNAK)
+                else if (elements[i].elementtype == elementTypes.SIGN)
                 {
                     if (equasion.Count() >= 2 && double.TryParse(equasion.Pop().value, out typ1) && double.TryParse(equasion.Pop().value, out typ2))
-                        equasion.Push(new typ(typy.LICZBA, calculateS(typ2, typ1, elements[i].value)));
+                        equasion.Push(new elementType(elementTypes.NUMBER, CalculateSigns(typ2, typ1, elements[i].value)));
                 }
-                else if (elements[i].typ_of == typy.WYRAZENIE)
+                else if (elements[i].elementtype == elementTypes.EXPRESSION)
                 {
                     if (equasion.Count() >= 1 && double.TryParse(equasion.Pop().value, out typ1))
-                        equasion.Push(new typ(typy.LICZBA, calculateexpresCounts(typ1, elements[i].value)));
+                    {
+                        equasion.Push(new elementType(elementTypes.NUMBER, CalculateSinCos(typ1, elements[i].value)));
+                    }
                 }
-                else if (elements[i].typ_of == typy.POTENGA)
+                else if (elements[i].elementtype == elementTypes.POWER)
                 {
                     if (equasion.Count() >= 2 && double.TryParse(equasion.Pop().value, out typ1) && double.TryParse(equasion.Pop().value, out typ2))
-                        equasion.Push(new typ(typy.LICZBA, Math.Pow(typ2, typ1).ToString()));
+                        equasion.Push(new elementType(elementTypes.NUMBER, Math.Pow(typ2, typ1).ToString()));
                 }
-            }
-            CultureInfo culture = CultureInfo.CreateSpecificCulture("en-CA");
-
-            return string.Format("{0:0.0#########################################}", double.Parse(equasion.Pop().value));
+            }          
+            return double.Parse(equasion.Pop().value);
         }
-
-        void show_ready(List<typ> elements)
+        void ShowReady(List<elementType> elements)
         {
             StringBuilder stringBuilder = new StringBuilder();
 
@@ -439,142 +447,162 @@ namespace serwer
 
             Console.WriteLine(stringBuilder.ToString());
         }
-
-        char[] liczby2 = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };
-
-        void revers(string onp)
+        void ReversONP(string onp)
         {
             if (onp != null)
             {
-                string[] elementy = onp.Split(' ');
-                string typ1, typ2;
-                StringBuilder sb = new StringBuilder();
+                string[] elements = onp.Split(' ');
+                string one, two;
+                StringBuilder stringBuilder = new StringBuilder();
 
                 Stack<string> store = new Stack<string>();
 
-                for (int i = 0; i < elementy.Length; i++)
+                for (int i = 0; i < elements.Length; i++)
                 {
-                    if (elementy[i] == "PI" || elementy[i] == "x" || elementy[i].IndexOfAny(liczby2) == 0 && elementy[i].Length > 0)
+                    if (elements[i] == "PI" || elements[i] == "x" || elements[i].IndexOfAny(signs2) == 0 && elements[i].Length > 0)
                     {
-                        store.Push(elementy[i]);
+                        store.Push(elements[i]);
                     }
-                    else if (elementy[i].IndexOfAny(znaki) == 0)
+                    else if (elements[i].IndexOfAny(signs) == 0)
                     {
-                        typ1 = store.Pop();
-                        typ2 = store.Pop();
+                        one = store.Pop();
+                        two = store.Pop();
 
-                        switch (elementy[i])
+                        switch (elements[i])
                         {
                             case "-":
-                                store.Push(sb.AppendFormat("({0}-{1})", typ2, typ1).ToString());
+                                store.Push(stringBuilder.AppendFormat("({0}-{1})", two, one).ToString());
                                 break;
                             case "+":
-                                store.Push(sb.AppendFormat("({0}+{1})", typ2, typ1).ToString());
+                                store.Push(stringBuilder.AppendFormat("({0}+{1})", two, one).ToString());
                                 break;
                             case "*":
-                                if (typ2.Contains("+") || typ2.Contains("-"))
+                                if (two.Contains("+") || two.Contains("-"))
                                 {
-                                    typ2 = sb.AppendFormat("({0})", typ2).ToString();
-                                    sb.Clear();
+                                    two = stringBuilder.AppendFormat("({0})", two).ToString();
+                                    stringBuilder.Clear();
                                 }
-                                if (typ1.Contains("+") || typ1.Contains("-"))
+                                if (one.Contains("+") || one.Contains("-"))
                                 {
-                                    typ1 = sb.AppendFormat("({0})", typ1).ToString();
-                                    sb.Clear();
+                                    one = stringBuilder.AppendFormat("({0})", one).ToString();
+                                    stringBuilder.Clear();
                                 }
-                                store.Push(sb.AppendFormat("({0}*{1})", typ2, typ1).ToString());
+                                store.Push(stringBuilder.AppendFormat("({0}*{1})", two, one).ToString());
                                 break;
                             case "/":
-                                if (typ2.Contains("+") || typ2.Contains("-"))
+                                if (two.Contains("+") || two.Contains("-"))
                                 {
-                                    typ2 = sb.AppendFormat("({0})", typ2).ToString();
-                                    sb.Clear();
+                                    two = stringBuilder.AppendFormat("({0})", two).ToString();
+                                    stringBuilder.Clear();
                                 }
-                                if (typ1.Contains("+") || typ1.Contains("-"))
+                                if (one.Contains("+") || one.Contains("-"))
                                 {
-                                    typ1 = sb.AppendFormat("({0})", typ1).ToString();
-                                    sb.Clear();
+                                    one = stringBuilder.AppendFormat("({0})", one).ToString();
+                                    stringBuilder.Clear();
                                 }
-                                store.Push(sb.AppendFormat("({0}/{1})", typ2, typ1).ToString());
+                                store.Push(stringBuilder.AppendFormat("({0}/{1})", two, one).ToString());
                                 break;
                             case "^":
-                                if (typ1.Length >= 3)
+                                if (one.Length >= 3)
                                 {
-                                    typ1 = sb.AppendFormat("({0})", typ1).ToString();
-                                    sb.Clear();
+                                    one = stringBuilder.AppendFormat("({0})", one).ToString();
+                                    stringBuilder.Clear();
                                 }
-                                if (typ2.Length >= 3)
+                                if (two.Length >= 3)
                                 {
-                                    typ2 = sb.AppendFormat("({0})", typ2).ToString();
-                                    sb.Clear();
+                                    two = stringBuilder.AppendFormat("({0})", two).ToString();
+                                    stringBuilder.Clear();
                                 }
-                                store.Push(sb.AppendFormat("({0}^{1})", typ2, typ1).ToString());
-                                sb.Clear();
+                                store.Push(stringBuilder.AppendFormat("({0}^{1})", two, one).ToString());
+                                stringBuilder.Clear();
                                 break;
                         }
-                        sb.Clear();
+                        stringBuilder.Clear();
                     }
-                    else if (elementy[i] != "")
+                    else if (elements[i] != "")
                     {
-                        typ1 = store.Pop();
-                        switch (elementy[i])
+                        one = store.Pop();
+                        switch (elements[i])
                         {
-                            case "cos": store.Push(sb.AppendFormat("cos({0})", typ1).ToString()); break;
-                            case "sin": store.Push(sb.AppendFormat("sin({0})", typ1).ToString()); break;
-                            case "abs": store.Push(sb.AppendFormat("abs({0})", typ1).ToString()); break;
-                            case "tan": store.Push(sb.AppendFormat("tan({0})", typ1).ToString()); break;
-                            case "exp": store.Push(sb.AppendFormat("exp({0})", typ1).ToString()); break;
-                            case "log": store.Push(sb.AppendFormat("log({0})", typ1).ToString()); break;
-                            case "sqrt": store.Push(sb.AppendFormat("sqrt({0})", typ1).ToString()); break;
-                            case "cosh": store.Push(sb.AppendFormat("cosh({0})", typ1).ToString()); break;
-                            case "sinh": store.Push(sb.AppendFormat("sinh({0})", typ1).ToString()); break;
-                            case "tanh": store.Push(sb.AppendFormat("tanh({0})", typ1).ToString()); break;
-                            case "asin": store.Push(sb.AppendFormat("asin({0})", typ1).ToString()); break;
-                            case "acos": store.Push(sb.AppendFormat("acos({0})", typ1).ToString()); break;
-                            case "atan": store.Push(sb.AppendFormat("atan({0})", typ1).ToString()); break;
+                            case "cos": store.Push(stringBuilder.AppendFormat("cos({0})", one).ToString()); break;
+                            case "sin": store.Push(stringBuilder.AppendFormat("sin({0})", one).ToString()); break;
+                            case "abs": store.Push(stringBuilder.AppendFormat("abs({0})", one).ToString()); break;
+                            case "tan": store.Push(stringBuilder.AppendFormat("tan({0})", one).ToString()); break;
+                            case "exp": store.Push(stringBuilder.AppendFormat("exp({0})", one).ToString()); break;
+                            case "log": store.Push(stringBuilder.AppendFormat("log({0})", one).ToString()); break;
+                            case "sqrt": store.Push(stringBuilder.AppendFormat("sqrt({0})", one).ToString()); break;
+                            case "cosh": store.Push(stringBuilder.AppendFormat("cosh({0})", one).ToString()); break;
+                            case "sinh": store.Push(stringBuilder.AppendFormat("sinh({0})", one).ToString()); break;
+                            case "tanh": store.Push(stringBuilder.AppendFormat("tanh({0})", one).ToString()); break;
+                            case "asin": store.Push(stringBuilder.AppendFormat("asin({0})", one).ToString()); break;
+                            case "acos": store.Push(stringBuilder.AppendFormat("acos({0})", one).ToString()); break;
+                            case "atan": store.Push(stringBuilder.AppendFormat("atan({0})", one).ToString()); break;
 
                         }
-                        sb.Clear();
+                        stringBuilder.Clear();
                     }
                 }
                 Console.WriteLine(store.Pop().Replace(',', '.'));
             }
         }
-
-        string calculateS(double o, double t, string znak)
+         string CalculateSigns(double one, double two, string signs)
         {
-            switch (znak)
+            switch (signs)
             {
-                case "-": return (o - t).ToString();
-                case "+": return (o + t).ToString();
-                case "*": return (o * t).ToString();
-                case "/": if (t == 0) throw new EquasionException("Coś jest źle z równaniem dziel przez 0"); return (o / t).ToString();
+                case "-":
+                    return (one - two).ToString();            
+                case "+":
+                    return (one + two).ToString();              
+                case "*":
+                    return (one * two).ToString(); 
+                case "/":
+                    if (two == 0)
+                        throw new EquasionException("Coś jest źle z równaniem dziel przez 0");
+                    return (one / two).ToString();       
             }
             return "";
         }
-
-        string calculateexpresCounts(double o, string w)
+        string CalculateSinCos(double one, string word)
         {
-            if (w.Contains("-"))
+            if (word.Contains("-"))
             {
-                o *= -1;
-                w = w.Substring(1, w.Length - 1);
+                one *= -1;
+                word = word.Substring(1, word.Length - 1);
             }
-            switch (w)
+            switch (word)
             {
-                case "cos": return (Math.Cos(o)).ToString();
-                case "sin": return (Math.Sin(o)).ToString();
-                case "abs": return (Math.Abs(o)).ToString();
-                case "tan": return (Math.Tan(o)).ToString();
-                case "exp": return (Math.Exp(o)).ToString();
-                case "log": return (Math.Log(o)).ToString();
-                case "sqrt": return (Math.Sqrt(o)).ToString();
-                case "cosh": return (Math.Cosh(o)).ToString();
-                case "sinh": return (Math.Sinh(o)).ToString();
-                case "tanh": return (Math.Tanh(o)).ToString();
-                case "asin": return (Math.Asin(o)).ToString();
-                case "acos": return (Math.Acos(o)).ToString();
-                case "atan": return (Math.Atan(o)).ToString();
+                case "cos":
+                    return (Math.Cos(one)).ToString();
+                case "sin":
+                    return (Math.Sin(one)).ToString();
+                case "abs":
+                    return (Math.Abs(one)).ToString();
+                case "tan":
+                    return (Math.Tan(one)).ToString();
+                case "exp":
+                    return (Math.Exp(one)).ToString();
+                case "log":
+                    return (Math.Log(one)).ToString();
+                case "sqrt":
+                    return (Math.Sqrt(one)).ToString();
+                case "cosh":
+                    return (Math.Cosh(one)).ToString();
+                case "sinh":
+                    return (Math.Sinh(one)).ToString();
+                case "tanh":
+                    return (Math.Tanh(one)).ToString();
+                case "asin":
+                    if (one > 1 || one < -1)
+                        throw new EquasionException("wartość w asin() przekracza dziedzinę funkcji");
+                    return (Math.Asin(one)).ToString();
+                case "acos":
+                    if (one > 1 || one < -1)
+                        throw new EquasionException("wartość w acos() przekracza dziedzinę  funkcji");
+                    return (Math.Acos(one)).ToString();
+                case "atan":
+                    if (one > 1 || one < -1)
+                        throw new EquasionException("wartość w atan() przekracza dziedzinę  funkcji");
+                    return (Math.Atan(one)).ToString();
             }
             return "";
         }

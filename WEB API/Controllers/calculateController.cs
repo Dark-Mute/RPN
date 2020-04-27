@@ -15,18 +15,18 @@ namespace serwer.Controllers
         [HttpGet]
         [Produces("application/json")]
         [Route("xy")]
-        public Models.Imodel xy(string formula, double from,double to, int n)
+        public dynamic xy(string formula, double from,double to, int n)
         {
             RPN rPN = new RPN();
-            return rPN.formula(formula,from,to,n);
+            return rPN.Formula(formula,from,to,n);
         }
 
         [HttpGet]
         [Produces("application/json")]
-        public Models.Imodel Get2(string formula, double x)
+        public dynamic Get2(string formula, double x)
         {
             RPN rPN = new RPN();
-            return rPN.formula(formula, x);
+            return rPN.Formula(formula, x);
         }
 
        

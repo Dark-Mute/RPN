@@ -13,10 +13,10 @@ namespace serwer.Controllers
     {
         [HttpGet]
         [Produces("application/json")]
-        public Models.Imodel Get1(string formula)
+        public dynamic Get1(string formula)
         {
             RPN rPN = new RPN();
-            return rPN.formula(formula);
+            return rPN.Formula(formula);
         }
     }
 }
