@@ -13,9 +13,10 @@ namespace ConsoleApp1
         {
             //Console.WriteLine("<FORMULA> <X> <FROM> <TO> <N>");
 
-            string all = Console.ReadLine();
+            //string all = Console.ReadLine();
+            
             Console.Clear();
-            RPN rPN = new RPN(all);           
+            RPN rPN = new RPN(args);           
             Console.Read();
         }        
     }
@@ -49,33 +50,27 @@ namespace ConsoleApp1
 
     class RPN
     {
-        public RPN(string all)
+        public RPN(string[] args)
         {
             try
             {
-                for (int i = 0; i < all.Length; i++)
-                {
-                      if (all[i] == '"')
-                        all = all.Remove(i, 1);
-                }
-                all = all.Replace('.', ',');
-                string[] array = all.Split(' ');
-
-                if (array.Length != 5)               
-                    throw new EquasionException("Nie podałeś odpowiedniej ilości parametrów");
+                if(args==null || args.Length!=5)
+                   throw new EquasionException("Nie podałeś odpowiedniej ilości parametrów");
 
                 string infix = "";
-                List<elementType> onp = CreateONP(array[0].Replace('.', ','), ref infix);             
+                List<elementType> onp = CreateONP(args[0].Replace('.', ','), ref infix);             
                 Console.WriteLine(infix);
 
                 ShowReady(onp);
-                Console.WriteLine(   CalculateUnknown(double.Parse(array[1]), onp));
-                List<string> results = CalculateUnknownRange(double.Parse(array[2]), double.Parse(array[3]), int.Parse(array[4]), onp);
+                
+                Console.WriteLine(CalculateUnknown(double.Parse(args[1].Replace('.', ',')), onp));
 
+                List<string> results = CalculateUnknownRange(double.Parse(args[2].Replace('.', ',')), double.Parse(args[3].Replace('.', ',')), int.Parse(args[4].Replace('.', ',')), onp);
                 foreach(string r in results)
                 {
                     Console.WriteLine(r);
                 }
+                
           
             }
             catch (EquasionException exe)
@@ -507,18 +502,14 @@ namespace ConsoleApp1
             {
                 case "-":
                     return (one - two).ToString();
-                    break;
                 case "+":
                     return (one + two).ToString();
-                    break;
                 case "*":
                     return (one * two).ToString();
-                    break;
                 case "/":
                     if (two == 0)
                         throw new EquasionException("Coś jest źle z równaniem dziel przez 0");
                     return (one / two).ToString();
-                    break;
             }
             return "";
         }
@@ -534,49 +525,36 @@ namespace ConsoleApp1
             {
                 case "cos":
                     return (Math.Cos(one)).ToString();
-                    break;
                 case "sin":
                     return (Math.Sin(one)).ToString();
-                    break;
                 case "abs":
                     return (Math.Abs(one)).ToString();
-                    break;
                 case "tan":
                     return (Math.Tan(one)).ToString();
-                    break;
                 case "exp":
                     return (Math.Exp(one)).ToString();
-                    break;
                 case "log":
                     return (Math.Log(one)).ToString();
-                    break;
                 case "sqrt":
                     return (Math.Sqrt(one)).ToString();
-                    break;
                 case "cosh":
                     return (Math.Cosh(one)).ToString();
-                    break;
                 case "sinh":
                     return (Math.Sinh(one)).ToString();
-                    break;
                 case "tanh":
                     return (Math.Tanh(one)).ToString();
-                    break;
                 case "asin":
                     if (one > 1 || one < -1)
                         throw new EquasionException("wartość w asin() przekracza dziedzinę funkcji");
                     return (Math.Asin(one)).ToString();
-                    break;
                 case "acos":
                     if (one > 1 || one < -1)
                         throw new EquasionException("wartość w acos() przekracza dziedzinę  funkcji");
                     return (Math.Acos(one)).ToString();
-                    break;
                 case "atan":
                     if (one > 1 || one < -1)
                         throw new EquasionException("wartość w atan() przekracza dziedzinę  funkcji");
                     return (Math.Atan(one)).ToString();
-                    break;
             }
             return "";
         }
