@@ -12,10 +12,8 @@ namespace ConsoleApp1
          static void Main(string[] args)
         {
             //Console.WriteLine("<FORMULA> <X> <FROM> <TO> <N>");
-
             //string all = Console.ReadLine();
-            
-            Console.Clear();
+            //Console.Clear();
             RPN rPN = new RPN(args);           
             Console.Read();
         }        
