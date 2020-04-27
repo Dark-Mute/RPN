@@ -52,11 +52,11 @@ namespace serwer
 
           public dynamic errorM(string ex)
         {
-            dynamic d2 = new ExpandoObject();
+            dynamic error = new ExpandoObject();
 
-            d2.status = "ok";
-            d2.result = ex;
-            return d2;
+            error.status = "ok";
+            error.result = ex;
+            return error;
         }
 
         public dynamic Formula(string row)
@@ -72,16 +72,16 @@ namespace serwer
                     s.Add(t.value);
                 }
 
-                dynamic d = new ExpandoObject();
-                dynamic d2 = new ExpandoObject();
+                dynamic result = new ExpandoObject();
+                dynamic returned = new ExpandoObject();
 
-                d.infix = infix.ToArray();
-                d.rpn = s.ToArray();
+                result.infix = infix.ToArray();
+                result.rpn = s.ToArray();
 
-                d2.status = "ok";
-                d2.result = d;
+                returned.status = "ok";
+                returned.result = result;
              
-                return d2;
+                return returned;
             }
             catch (EquasionException iq)
             {             
@@ -103,12 +103,11 @@ namespace serwer
                 List<elementType> oNP = CreateONP(row.Replace('.', ',').Replace(' ', '+'), out infix);
                 double result = CalculateUnknown(x, oNP);
 
-                dynamic d2 = new ExpandoObject();
+                dynamic returned = new ExpandoObject();
 
-            
-                d2.status = "ok";
-                d2.result = result;
-                return d2;
+                returned.status = "ok";
+                returned.result = result;
+                return returned;
             }
             catch (EquasionException iq)
             {
@@ -131,12 +130,12 @@ namespace serwer
                 List<elementType> oNP = CreateONP(row.Replace('.', ',').Replace(' ', '+'), out infix);
                 List<dynamic> result = CalculateUnknownRange(min, max, ammount, oNP);
 
-                dynamic d2 = new ExpandoObject();
+                dynamic returned = new ExpandoObject();
 
 
-                d2.status = "ok";
-                d2.result = result.ToArray();
-                return d2;
+                returned.status = "ok";
+                returned.result = result.ToArray();
+                return returned;
             }
             catch (EquasionException iq)
             {
