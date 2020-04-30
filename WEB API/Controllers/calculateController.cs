@@ -4,14 +4,16 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Cors;
 
-namespace serwer.Controllers
+namespace WEB_API.Controllers
 {
+    
     [Route("api/[controller]")]
-
     [ApiController]
     public class calculateController : ControllerBase
     {
+      
         [HttpGet]
         [Produces("application/json")]
         [Route("xy")]
@@ -21,6 +23,7 @@ namespace serwer.Controllers
             return rPN.Formula(formula,from,to,n);
         }
 
+       
         [HttpGet]
         [Produces("application/json")]
         public dynamic Get2(string formula, double x)

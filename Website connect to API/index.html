@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title> s1 </title>
+        <meta charset="UTF-8"/>
+	</head>
+	
+	<body >
+        
+    <div class='onpcreate'>
+        <form id="formulaform">
+			
+            <br /> <textarea name="formula1" placeholder="formula" onfocus="this.placeholder=''" onblur="this.placeholder='formula'"></textarea><br />			       
+            <input type="submit" value="Wyślij" />
+        
+        </form>
+        <div id="result"> 
+        </div>
+    </div>
+
+    <div class='calculateequation'>
+        <form id="xform">
+			
+            <br /> <textarea name="formula2" placeholder="formula" onfocus="this.placeholder=''" onblur="this.placeholder='formula'"></textarea><br />			
+            <br /> <input type="text" name="x" placeholder="x" onfocus="this.placeholder=''" onblur="this.placeholder='x'"/><br />
+            <input type="submit" value="Wyślij" />
+        
+        </form>
+        <div id="xresult"> 
+        </div>
+    </div>
+
+    <div class='calculateequationrange'>
+        <form id="rangeform">
+			
+            <br /> <textarea name="formula3" placeholder="formula" onfocus="this.placeholder=''" onblur="this.placeholder='formula'"></textarea><br />			           
+            <br /> <input type="text" name="from" placeholder="from" onfocus="this.placeholder=''" onblur="this.placeholder='from'"/><br />
+            <br /> <input type="text" name="to" placeholder="to" onfocus="this.placeholder=''" onblur="this.placeholder='to'"/><br />
+            <br /> <input type="text" name="n" placeholder="n" onfocus="this.placeholder=''" onblur="this.placeholder='n'"/><br />
+            <input type="submit" value="Wyślij" />
+        
+        </form>
+
+        <div id="rangeresult"> </div>
+        <div id="rangeresult1" style=" max-width: 75%; margin: auto auto; display: block !important;"></div>
+    </div>
+   
+
+
+    <div class='tosend'>
+        <form id="onpform">
+			
+            <br /> <textarea name="onp" placeholder="onp" onfocus="this.placeholder=''" onblur="this.placeholder='onp'"></textarea><br />			
+            <input type="submit" value="Wyślij" />
+        
+        </form>
+        <div id="onpresult"> 
+        </div>
+
+    </div>
+    
+    <script src="canvasjs.min.js"></script>
+	<script src="script.js"></script> 		
+    <script src="jquery-1.11.3.min.js"></script>
+	</body>
+
+</html>

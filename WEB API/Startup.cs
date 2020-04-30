@@ -22,15 +22,51 @@ namespace WEB_API
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
+        // This method gets called by the runtime. Use this method to add services to the container.2
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+          
+            services.AddCors(options =>
+            {
+               /* options.AddPolicy("MyPolicy",
+                    builder =>
+                    {
+                        builder.WithOrigins("https://localhost:5001",
+                                            "http://localhost:5000",
+                                            "https://localhost:44305")
+                                .WithMethods("PUT", "DELETE", "GET");
+                    });*/
+
+                    /*options.AddDefaultPolicy(builder =>
+                    {
+                        builder.WithOrigins("https://localhost:5001",
+                                            "http://localhost:5000",
+                                            "https://localhost:44382",
+                                            "http://localhost:3707")
+                                .WithMethods("PUT", "DELETE", "GET");
+                    });*/
+            });
+
+            services.AddCors(setup =>
+            {
+               
+                setup.AddDefaultPolicy( policy =>
+                 {
+                     policy.AllowAnyOrigin();
+                     policy.AllowAnyMethod();
+                     policy.AllowAnyHeader();
+                     //policy.WithHeaders("Access-Cotrol-Allow-Origin", "Access-Cotrol-Allow-Headers");
+                 });
+            });
+
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+        
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -40,6 +76,8 @@ namespace WEB_API
                 app.UseHsts();
             }
 
+             app.UseCors();
+             app.UseCors(builder => {builder.WithOrigins("http://localhost:5001");});
             app.UseHttpsRedirection();
             app.UseMvc();
         }

@@ -6,8 +6,9 @@ using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
-namespace serwer
+namespace WEB_API
 {
  enum elementTypes
     {
@@ -46,7 +47,7 @@ namespace serwer
             {"/",2},
             {"^",3}
         };
-        char[] signs = { '-', '+', '/', '*', '^' };
+        char[] signs = { '-', '+', '/', '*', '^'};
         char[] numbers = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', ',' };
         char[] signs2 = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' };
 
@@ -54,8 +55,8 @@ namespace serwer
         {
             dynamic error = new ExpandoObject();
 
-            error.status = "ok";
-            error.result = ex;
+            error.status = "error";
+            error.message = ex;
             return error;
         }
 
@@ -65,7 +66,9 @@ namespace serwer
            
             try
             {
-                List<elementType> oNP = CreateONP(row.Replace('.', ',').Replace(' ','+'),  out infix);
+                if(row == null || row == "")
+                    throw new EquasionException("Nie podałeś równania");
+                List<elementType> oNP = CreateONP(row,  out infix);
                 List<string> s = new List<string>();
                 foreach(elementType t in oNP)
                 {
@@ -100,7 +103,9 @@ namespace serwer
             List<string> infix;         
             try
             {
-                List<elementType> oNP = CreateONP(row.Replace('.', ',').Replace(' ', '+'), out infix);
+                if(row == null || row == "")
+                    throw new EquasionException("Nie podałeś równania");
+                List<elementType> oNP = CreateONP(row, out infix);
                 double result = CalculateUnknown(x, oNP);
 
                 dynamic returned = new ExpandoObject();
@@ -127,7 +132,9 @@ namespace serwer
             StringBuilder sb = new StringBuilder();
             try
             {
-                List<elementType> oNP = CreateONP(row.Replace('.', ',').Replace(' ', '+'), out infix);
+                if(row == null || row == "")
+                    throw new EquasionException("Nie podałeś równania");
+                List<elementType> oNP = CreateONP(row, out infix);
                 List<dynamic> result = CalculateUnknownRange(min, max, ammount, oNP);
 
                 dynamic returned = new ExpandoObject();
@@ -156,8 +163,28 @@ namespace serwer
             return temp;
         }
 
+        public dynamic Reverse(string onp)
+        {
+              try
+            {
+                dynamic returned = new ExpandoObject();
+                returned.status = "ok";
+                returned.result = ReverseONP2(onp);
+                return returned;
+            }
+            catch (EquasionException iq)
+            {
+                return errorM(iq.Message);
+            }
+            catch (Exception ex)
+            {
+                return errorM(ex.Message);
+            }
+        }
         List<elementType> CreateONP(string row, out List<string> infix)
         {
+           
+            row = row.Replace("=","+").Replace('.', ',');
             List<elementType> elements = new List<elementType>();
             List<Stack<elementType>> characters = new List<Stack<elementType>>();
             Stack<elementType> sincosStack = new Stack<elementType>();
@@ -201,7 +228,7 @@ namespace serwer
                 if (row.Length >= i + 2 && row.Substring(i, 2) == "PI")
                 {
                     if (umberIsTaken)
-                        throw new EquasionException("Coś jest źle z równaniem pi");
+                        throw new EquasionException("Umieściłeś PI zaraz po liczbie bez żadnego znaku rozdielającego jak +,-,*,/,^");
 
                     i += 1;
                     elements.Add(new elementType(elementTypes.NUMBER, minus + Math.PI.ToString()));                   
@@ -213,7 +240,7 @@ namespace serwer
                 if (row[i] == 'x')
                 {
                     if (umberIsTaken)
-                        throw new EquasionException("Coś jest źle z równaniem lub /0");
+                        throw new EquasionException("Umieściłeś x zaraz po liczbie bez żadnego znaku rozdielającego jak +,-,*,/,^");
 
                     elements.Add(new elementType(elementTypes.X, minus + "x"));
                     infix.Add(minus + "x");
@@ -230,7 +257,7 @@ namespace serwer
                     }
                     i--;
                     if (divide && double.Parse(number) == 0 || umberIsTaken || number == "," || number.IndexOf(",") != number.LastIndexOf(","))
-                        throw new EquasionException("Coś jest źle z równaniem  ");
+                        throw new EquasionException("Wrównaniu któraś liczba ma za dużo kropek lub dzielisz przez zero");
 
                     elements.Add(new elementType(elementTypes.NUMBER, minus + number));               
                     infix.Add(minus + number);
@@ -242,7 +269,7 @@ namespace serwer
                 if (row.IndexOfAny(signs, i) == i)
                 {
                     if (!umberIsTaken || minus == "-" || bracketIsOpen)
-                        throw new EquasionException("Coś jest źle z równaniem znak");
+                        throw new EquasionException("W miejscu: " + (i+1) + "występują 2 lub więcej znaków koło siebi umieść nawiasy lub usuń niepoprawne znaki, niepoprawnym znakiem jest: " + row[i]);
 
                     if (row[i] == '^')
                         characterTemp = new elementType(elementTypes.POWER, row[i].ToString());
@@ -318,7 +345,7 @@ namespace serwer
                 {
                     
                     if (!umberIsTaken || sincosStack.Count <= 0)
-                        throw new EquasionException("Coś jest źle z równaniem nawias zamykającym");
+                        throw new EquasionException("Masz za dużo nawiasów zamykających");
 
                     elementType t = sincosStack.Pop();
                     while (characters[bracketCounter].Count != 0)
@@ -339,7 +366,7 @@ namespace serwer
 
             if (bracketCounter != 0 || !umberIsTaken || divide)
             {
-                throw new EquasionException("Coś jest źle z równaniem brak nawiasu lub za durza ilość, na końcu +,-,*,/,^");
+                throw new EquasionException("Coś jest źle z równaniem brak nawiasu lub nawiasów zamykających, lub na końcu równania znajduje się któryś z tych znakó: +,-,*,/,^");
             }
 
             while (characters[bracketCounter].Count != 0)
@@ -390,7 +417,7 @@ namespace serwer
                     }
                     double temp = Calculate(backup);
                     d.x = Math.Round(min, 10);
-                    if (double.IsNaN(temp))
+                    if (double.IsInfinity(temp))
                     {                   
                         d.y = "Wynik jest zbyt wysoki";
                     }
@@ -436,44 +463,76 @@ namespace serwer
                 }
             }          
             return double.Parse(equasion.Pop().value);
-        }
-        void ShowReady(List<elementType> elements)
+        } 
+        string ReverseONP2(string onp)
         {
-            StringBuilder stringBuilder = new StringBuilder();
-
-            for (int i = 0; i < elements.Count; i++)
-                stringBuilder.Append(elements[i].value + " ");
-
-            Console.WriteLine(stringBuilder.ToString());
-        }
-        void ReversONP(string onp)
-        {
-            if (onp != null)
+            if (onp != null || onp =="")
             {
-                string[] elements = onp.Split(' ');
+                onp = onp.Replace("=","+");
+                string[] elements = onp.Split(' ');               
                 string one, two;
                 StringBuilder stringBuilder = new StringBuilder();
 
                 Stack<string> store = new Stack<string>();
+                Regex regexNumber = new Regex(@"^\d\.\d$|^-\d\.\d$|^\d$|^-\d$|^PI$|^-PI$|^x$|^-x$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                Regex regexSigns = new Regex(@"^\+$|^\-$|^\^$|^\*$|^/$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 for (int i = 0; i < elements.Length; i++)
                 {
-                    if (elements[i] == "PI" || elements[i] == "x" || elements[i].IndexOfAny(signs2) == 0 && elements[i].Length > 0)
+                    if (regexNumber.IsMatch(elements[i]))
                     {
                         store.Push(elements[i]);
                     }
-                    else if (elements[i].IndexOfAny(signs) == 0)
+                    else if (regexSigns.IsMatch(elements[i]))//elements[i].IndexOfAny(signs) == 0 )
                     {
+                        if(store.Count <2)
+                            throw new EquasionException("Odwrotna notacja którą podałeś jest nie poprawna nie podałeś w odpowiedniej kolejności liczb i znaków lub kótrychś elementów jest za dużo, błąd znajduje się na pozycji: " + (i+1) + " jest nim: " + elements[i]);
+                       
+                  
                         one = store.Pop();
                         two = store.Pop();
 
                         switch (elements[i])
                         {
                             case "-":
-                                store.Push(stringBuilder.AppendFormat("({0}-{1})", two, one).ToString());
+                                if (two.Contains("*") || two.Contains("/") || two.Contains("^") )
+                                {
+                                    two = stringBuilder.AppendFormat("({0})", two).ToString();
+                                    stringBuilder.Clear();
+                                }
+                                if (one.Contains("*") || one.Contains("/") || one.Contains("^"))
+                                {
+                                    one = stringBuilder.AppendFormat("({0})", one).ToString();
+                                    stringBuilder.Clear();
+                                }
+
+                                if (one[0] == '-')
+                                {
+                                    one = one.Remove(0,1);
+                                    store.Push(stringBuilder.AppendFormat("{0}+{1}", two, one).ToString());
+                                }
+                                else
+                                    store.Push(stringBuilder.AppendFormat("{0}-{1}", two, one).ToString());
                                 break;
                             case "+":
-                                store.Push(stringBuilder.AppendFormat("({0}+{1})", two, one).ToString());
+                                if (two.Contains("*") || two.Contains("/") || two.Contains("^"))
+                                {
+                                    two = stringBuilder.AppendFormat("({0})", two).ToString();
+                                    stringBuilder.Clear();
+                                }
+                                if (one.Contains("*") || one.Contains("/") || one.Contains("^"))
+                                {
+                                    one = stringBuilder.AppendFormat("({0})", one).ToString();
+                                    stringBuilder.Clear();
+                                }
+
+                                if (one[0] == '-')
+                                {
+                                    one = one.Remove(0,1);
+                                    store.Push(stringBuilder.AppendFormat("{0}-{1}", two, one).ToString());
+                                }
+                                else
+                                    store.Push(stringBuilder.AppendFormat("{0}+{1}", two, one).ToString());
                                 break;
                             case "*":
                                 if (two.Contains("+") || two.Contains("-"))
@@ -486,7 +545,7 @@ namespace serwer
                                     one = stringBuilder.AppendFormat("({0})", one).ToString();
                                     stringBuilder.Clear();
                                 }
-                                store.Push(stringBuilder.AppendFormat("({0}*{1})", two, one).ToString());
+                                store.Push(stringBuilder.AppendFormat("{0}*{1}", two, one).ToString());
                                 break;
                             case "/":
                                 if (two.Contains("+") || two.Contains("-"))
@@ -499,20 +558,20 @@ namespace serwer
                                     one = stringBuilder.AppendFormat("({0})", one).ToString();
                                     stringBuilder.Clear();
                                 }
-                                store.Push(stringBuilder.AppendFormat("({0}/{1})", two, one).ToString());
+                                store.Push(stringBuilder.AppendFormat("{0}/{1}", two, one).ToString());
                                 break;
                             case "^":
-                                if (one.Length >= 3)
+                                if (one.Contains("+") || one.Contains("-"))
                                 {
                                     one = stringBuilder.AppendFormat("({0})", one).ToString();
                                     stringBuilder.Clear();
                                 }
-                                if (two.Length >= 3)
+                                if (two.Contains("+") || two.Contains("-"))
                                 {
                                     two = stringBuilder.AppendFormat("({0})", two).ToString();
                                     stringBuilder.Clear();
                                 }
-                                store.Push(stringBuilder.AppendFormat("({0}^{1})", two, one).ToString());
+                                store.Push(stringBuilder.AppendFormat("{0}^{1}", two, one).ToString());
                                 stringBuilder.Clear();
                                 break;
                         }
@@ -520,7 +579,11 @@ namespace serwer
                     }
                     else if (elements[i] != "")
                     {
+                        if (store.Count < 1)
+                            throw new EquasionException("Odwrotna notacja którą podałeś jest nie poprawna nie podałeś w odpowiedniej kolejności liczb i wyrażeń lub kótrychś elementów jest za dużo, błąd znajduje się na pozycji: " + (i+1)  + " jest nim: " + elements[i]);
+
                         one = store.Pop();
+
                         switch (elements[i])
                         {
                             case "cos": store.Push(stringBuilder.AppendFormat("cos({0})", one).ToString()); break;
@@ -537,14 +600,32 @@ namespace serwer
                             case "acos": store.Push(stringBuilder.AppendFormat("acos({0})", one).ToString()); break;
                             case "atan": store.Push(stringBuilder.AppendFormat("atan({0})", one).ToString()); break;
 
+                            case "-cos": store.Push(stringBuilder.AppendFormat("-cos({0})", one).ToString()); break;
+                            case "-sin": store.Push(stringBuilder.AppendFormat("-sin({0})", one).ToString()); break;
+                            case "-abs": store.Push(stringBuilder.AppendFormat("-abs({0})", one).ToString()); break;
+                            case "-tan": store.Push(stringBuilder.AppendFormat("-tan({0})", one).ToString()); break;
+                            case "-exp": store.Push(stringBuilder.AppendFormat("-exp({0})", one).ToString()); break;
+                            case "-log": store.Push(stringBuilder.AppendFormat("-log({0})", one).ToString()); break;
+                            case "-sqrt": store.Push(stringBuilder.AppendFormat("-sqrt({0})", one).ToString()); break;
+                            case "-cosh": store.Push(stringBuilder.AppendFormat("-cosh({0})", one).ToString()); break;
+                            case "-sinh": store.Push(stringBuilder.AppendFormat("-sinh({0})", one).ToString()); break;
+                            case "-tanh": store.Push(stringBuilder.AppendFormat("-tanh({0})", one).ToString()); break;
+                            case "-asin": store.Push(stringBuilder.AppendFormat("-asin({0})", one).ToString()); break;
+                            case "-acos": store.Push(stringBuilder.AppendFormat("-acos({0})", one).ToString()); break;
+                            case "-atan": store.Push(stringBuilder.AppendFormat("-atan({0})", one).ToString()); break;
+
                         }
                         stringBuilder.Clear();
                     }
                 }
-                Console.WriteLine(store.Pop().Replace(',', '.'));
+                if(store.Count > 1)
+                    throw new EquasionException("Brakuje znaku lub wyrażenia aby utwożyć równanie ze wszystkich podanych parametrów");               
+                return store.Pop().Replace(',', '.');
             }
+            throw new EquasionException("Nie podałeś żadnego elementu");
         }
-         string CalculateSigns(double one, double two, string signs)
+       
+        string CalculateSigns(double one, double two, string signs)
         {
             switch (signs)
             {
@@ -556,7 +637,7 @@ namespace serwer
                     return (one * two).ToString(); 
                 case "/":
                     if (two == 0)
-                        throw new EquasionException("Coś jest źle z równaniem dziel przez 0");
+                        throw new EquasionException("Nie możesz dzielić przez 0");
                     return (one / two).ToString();       
             }
             return "";
@@ -592,15 +673,15 @@ namespace serwer
                     return (Math.Tanh(one)).ToString();
                 case "asin":
                     if (one > 1 || one < -1)
-                        throw new EquasionException("wartość w asin() przekracza dziedzinę funkcji");
+                        throw new EquasionException("wartość w asin() przekracza dziedzinę funkcji którą jest zakres od -1 do 1");
                     return (Math.Asin(one)).ToString();
                 case "acos":
                     if (one > 1 || one < -1)
-                        throw new EquasionException("wartość w acos() przekracza dziedzinę  funkcji");
+                        throw new EquasionException("wartość w acos() przekracza dziedzinę funkcji którą jest zakres od -1 do 1");
                     return (Math.Acos(one)).ToString();
                 case "atan":
                     if (one > 1 || one < -1)
-                        throw new EquasionException("wartość w atan() przekracza dziedzinę  funkcji");
+                        throw new EquasionException("wartość w atan() przekracza dziedzinę funkcji którą jest zakres od -1 do 1");
                     return (Math.Atan(one)).ToString();
             }
             return "";

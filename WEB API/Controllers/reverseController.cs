@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,15 +11,16 @@ namespace WEB_API.Controllers
     
     [Route("api/[controller]")]
     [ApiController]
-    public class tokensController : ControllerBase
+    public class reverseController : ControllerBase
     {
-       
         [HttpGet]
         [Produces("application/json")]
-        public dynamic Get1(string formula)
+        public dynamic Get(string onp)
         {
             RPN rPN = new RPN();
-            return rPN.Formula(formula);
+            return rPN.Reverse(onp);
         }
+
+       
     }
 }

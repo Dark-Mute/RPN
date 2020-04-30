@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title> s1 </title>
+        <meta charset="UTF-8"/>
+        <link rel="stylesheet" type="text/css" href="css.css">
+	</head>
+	
+	<body >
+        <header>
+           <h3> Moja Strona </h3>
+        </header>
+
+        
+        <nav>
+            <ol>
+                <li onclick="PageChanger(0)"><a href="#">Home</a></li>
+                <li onclick="PageChanger(1)"><a href="#">Stwórz onp</a></li>
+                <li onclick="PageChanger(2)"><a href="#">Oblicz równanie</a></li>
+                <li onclick="PageChanger(3)"><a href="#">Stwórz wykres równania</a></li>
+                <li onclick="PageChanger(4)"><a href="#">Stwórz równanie z onp</a></li>
+            </ol>
+
+        </nav>
+
+        <div id="content">
+
+            <div id="home" class="basestyle"> home</div>
+
+            <div id='createonp' class="basestyle">
+                <form id="formulaform">
+                    
+                    <br /> <textarea name="formula" placeholder="formuła" onfocus="this.placeholder=''" onblur="this.placeholder='formuła'"></textarea><br />			       
+                    <input type="submit" value="Stwórz onp" />
+                
+                </form>
+                <div id="resultinfix" class="results"></div>
+                <div id="resultonp" class="results"></div>
+
+                <table >
+                    <tr class="firstrow"> 
+                        <td>Operator</td>                       
+                        <td>Przykład</td>
+                        <td>Wynik</td>
+                    </tr>      
+                    <tr> 
+                        <td>+</td>                       
+                        <td>2+2</td>
+                        <td>2+2 = 4</td>
+                    </tr>
+                    <tr> 
+                        <td>-</td>                       
+                        <td>2-2</td>
+                        <td>2-2 = 0</td>
+                    </tr>
+                    <tr> 
+                        <td>*</td>                       
+                        <td>2*2</td>
+                        <td>2*2 = 4</td>
+                    </tr>
+                    <tr> 
+                        <td>/</td>                       
+                        <td>2/2</td>
+                        <td>2/2 = 1</td>
+                    </tr>
+                    <tr> 
+                        <td>^</td>                       
+                        <td>2^2</td>
+                        <td>2^2 = 4</td>
+                    </tr>
+                    <tr> 
+                        <td>exp()</td>                       
+                        <td>exp(2)</td>
+                        <td>exp(2) = 7.3891...</td>
+                    </tr>
+                    <tr> 
+                        <td>log()</td>                       
+                        <td>log(2)</td>
+                        <td>log(2)= 0.6931...</td>
+                    </tr>
+                    <tr> 
+                        <td>abs()</td>                       
+                        <td>abs(-2)</td>
+                        <td>abs(-2) = 2</td>
+                    </tr>
+                    <tr> 
+                        <td>sin()</td>                       
+                        <td>sin(2)</td>
+                        <td>sin(2) = 0.9093...</td>
+                    </tr>
+                    <tr> 
+                        <td>cos()</td>                       
+                        <td>cos(2)</td>
+                        <td>cos(2) =  -0.4161...</td>
+                    </tr>
+                    <tr> 
+                        <td>tan()</td>                       
+                        <td>tan(2)</td>
+                        <td>tan(2) = -2.1850...</td>
+                    </tr>
+                    <tr> 
+                        <td>sqrt()</td>                       
+                        <td>sqrt(2)</td>
+                        <td>sqrt(2) = 1.4142...</td>
+                    </tr>                   
+                    <tr> 
+                        <td>sinh()</td>                       
+                        <td>sinh(2)</td>
+                        <td>sinh(2) = 3.6269...</td>
+                    </tr>
+                    <tr> 
+                        <td>cosh()</td>                       
+                        <td>cosh(2)</td>
+                        <td>cosh(2) = 3.7622...</td>
+                    </tr>
+                    <tr> 
+                        <td>tanh()</td>                       
+                        <td>tanh(2)</td>
+                        <td>tanh(2) = 0.9640...</td>
+                    </tr>
+                    <tr> 
+                        <td>asin()</td>                       
+                        <td>asin(1)</td>
+                        <td>asin(1) = 1.5708...</td>
+                    </tr>
+                    <tr> 
+                        <td>acos()</td>                       
+                        <td>acos(1)</td>
+                        <td>acos(1) = 0</td>
+                    </tr>
+                    <tr> 
+                        <td>atan()</td>                       
+                        <td>atan(1)</td>
+                        <td>atan(1) = 0.7854...</td>
+                    </tr>                  
+
+                </table>
+
+            </div>
+                
+                
+            <div id='calculateequation' class="basestyle">
+                <form id="xform">
+                    
+                    <br /> <textarea name="formulax" placeholder="formuła" onfocus="this.placeholder=''" onblur="this.placeholder='formuła'"></textarea><br />			
+                    <br /> <input type="text" name="x" placeholder="x" onfocus="this.placeholder=''" onblur="this.placeholder='x'"/><br />
+                    <input type="submit" value="Oblicz" />
+                
+                </form>
+                <div id="xresult" class="results"></div>
+                <table >
+                    <tr class="firstrow"> 
+                        <td>Operator</td>                       
+                        <td>Przykład</td>
+                        <td>Wynik</td>
+                    </tr>      
+                    <tr> 
+                        <td>+</td>                       
+                        <td>2+2</td>
+                        <td>2+2 = 4</td>
+                    </tr>
+                    <tr> 
+                        <td>-</td>                       
+                        <td>2-2</td>
+                        <td>2-2 = 0</td>
+                    </tr>
+                    <tr> 
+                        <td>*</td>                       
+                        <td>2*2</td>
+                        <td>2*2 = 4</td>
+                    </tr>
+                    <tr> 
+                        <td>/</td>                       
+                        <td>2/2</td>
+                        <td>2/2 = 1</td>
+                    </tr>
+                    <tr> 
+                        <td>^</td>                       
+                        <td>2^2</td>
+                        <td>2^2 = 4</td>
+                    </tr>
+                    <tr> 
+                        <td>exp()</td>                       
+                        <td>exp(2)</td>
+                        <td>exp(2) = 7.3891...</td>
+                    </tr>
+                    <tr> 
+                        <td>log()</td>                       
+                        <td>log(2)</td>
+                        <td>log(2)= 0.6931...</td>
+                    </tr>
+                    <tr> 
+                        <td>abs()</td>                       
+                        <td>abs(-2)</td>
+                        <td>abs(-2) = 2</td>
+                    </tr>
+                    <tr> 
+                        <td>sin()</td>                       
+                        <td>sin(2)</td>
+                        <td>sin(2) = 0.9093...</td>
+                    </tr>
+                    <tr> 
+                        <td>cos()</td>                       
+                        <td>cos(2)</td>
+                        <td>cos(2) =  -0.4161...</td>
+                    </tr>
+                    <tr> 
+                        <td>tan()</td>                       
+                        <td>tan(2)</td>
+                        <td>tan(2) = -2.1850...</td>
+                    </tr>
+                    <tr> 
+                        <td>sqrt()</td>                       
+                        <td>sqrt(2)</td>
+                        <td>sqrt(2) = 1.4142...</td>
+                    </tr>                   
+                    <tr> 
+                        <td>sinh()</td>                       
+                        <td>sinh(2)</td>
+                        <td>sinh(2) = 3.6269...</td>
+                    </tr>
+                    <tr> 
+                        <td>cosh()</td>                       
+                        <td>cosh(2)</td>
+                        <td>cosh(2) = 3.7622...</td>
+                    </tr>
+                    <tr> 
+                        <td>tanh()</td>                       
+                        <td>tanh(2)</td>
+                        <td>tanh(2) = 0.9640...</td>
+                    </tr>
+                    <tr> 
+                        <td>asin()</td>                       
+                        <td>asin(1)</td>
+                        <td>asin(1) = 1.5708...</td>
+                    </tr>
+                    <tr> 
+                        <td>acos()</td>                       
+                        <td>acos(1)</td>
+                        <td>acos(1) = 0</td>
+                    </tr>
+                    <tr> 
+                        <td>atan()</td>                       
+                        <td>atan(1)</td>
+                        <td>atan(1) = 0.7854...</td>
+                    </tr>                  
+
+                </table>
+
+
+
+            </div>
+        
+            <div id='calculateequationrange' class="basestyle">
+                <form id="rangeform">
+                    
+                    <br /> <textarea name="formularange" placeholder="formuła" onfocus="this.placeholder=''" onblur="this.placeholder='formuła'"></textarea><br />			           
+                    <br /> <input type="text" name="from" placeholder="from" onfocus="this.placeholder=''" onblur="this.placeholder='from'"/><br />
+                    <br /> <input type="text" name="to" placeholder="to" onfocus="this.placeholder=''" onblur="this.placeholder='to'"/><br />
+                    <br /> <input type="text" name="n" placeholder="n" onfocus="this.placeholder=''" onblur="this.placeholder='n'"/><br />
+                    <input type="submit" value="Oblicz" />
+                
+                </form>
+        
+                <div id="rangeresult" class="results"></div>
+                <div id="rangeresult1"></div>
+            </div>
+        
+        
+        
+            <div id='createequation' class="basestyle">
+                <form id="onpform">
+                    
+                    <br /> <textarea name="formulaonp" placeholder="onp" onfocus="this.placeholder=''" onblur="this.placeholder='onp'"></textarea><br />			
+                    <input type="submit" value="Stwórz równanie" />
+                
+                </form>
+                <div id="onpresult" class="results"></div>
+                <table >
+                    <tr class="firstrow"> 
+                        <td>Operator</td>                       
+                        <td>Przykład</td>
+                        <td>Wynik</td>
+                    </tr>      
+                    <tr> 
+                        <td>+</td>                       
+                        <td>2 2 +</td>
+                        <td>2+2</td>
+                    </tr>
+                    <tr> 
+                        <td>-</td>                       
+                        <td>2 2 -</td>
+                        <td>2-2</td>
+                    </tr>
+                    <tr> 
+                        <td>*</td>                       
+                        <td>2 2 *</td>
+                        <td>2*2</td>
+                    </tr>
+                    <tr> 
+                        <td>/</td>                       
+                        <td>2 2 /</td>
+                        <td>2/2</td>
+                    </tr>
+                    <tr> 
+                        <td>^</td>                       
+                        <td>2 2 ^</td>
+                        <td>2^2</td>
+                    </tr>
+                    <tr> 
+                        <td>exp</td>                       
+                        <td>2 exp</td>
+                        <td>exp(2)</td>
+                    </tr>
+                    <tr> 
+                        <td>log</td>                       
+                        <td>2 log</td>
+                        <td>log(2)</td>
+                    </tr>
+                    <tr> 
+                        <td>abs</td>                       
+                        <td>-2 abs</td>
+                        <td>abs(-2)</td>
+                    </tr>
+                    <tr> 
+                        <td>sin</td>                       
+                        <td>2 sin</td>
+                        <td>sin(2)</td>
+                    </tr>
+                    <tr> 
+                        <td>cos</td>                       
+                        <td>2 cos</td>
+                        <td>cos(2)</td>
+                    </tr>
+                    <tr> 
+                        <td>tan</td>                       
+                        <td>2 tan</td>
+                        <td>tan(2)</td>
+                    </tr>
+                    <tr> 
+                        <td>sqrt</td>                       
+                        <td>2 sqrt</td>
+                        <td>sqrt(2)</td>
+                    </tr>                   
+                    <tr> 
+                        <td>sinh</td>                       
+                        <td>2 sinh</td>
+                        <td>sinh(2)</td>
+                    </tr>
+                    <tr> 
+                        <td>cosh</td>                       
+                        <td>2 cosh</td>
+                        <td>cosh(2)</td>
+                    </tr>
+                    <tr> 
+                        <td>tanh</td>                       
+                        <td>2 tanh</td>
+                        <td>tanh(2)</td>
+                    </tr>
+                    <tr> 
+                        <td>asin</td>                       
+                        <td>1 asin</td>
+                        <td>asin(1)</td>
+                    </tr>
+                    <tr> 
+                        <td>acos</td>                       
+                        <td>1 acos</td>
+                        <td>acos(1)</td>
+                    </tr>
+                    <tr> 
+                        <td>atan</td>                       
+                        <td>1 atan</td>
+                        <td>atan(1)</td>
+                    </tr>                  
+
+                </table>
+            </div>
+        </div>  
+
+        <script src="canvasjs.min.js"></script>
+        <script src="script.js"></script> 		
+        <script src="jquery-1.11.3.min.js"></script>
+        <script src="script2.js"></script> 	
+
+	</body>
+
+</html>
