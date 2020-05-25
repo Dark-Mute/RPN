@@ -1,0 +1,23 @@
+﻿
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Calculate Equation Range";
+}
+
+<div id='calculateequationrange' class="basestyle">
+    <form id="rangeform">
+
+        <br /> <textarea name="formularange" placeholder="formuła" onfocus="this.placeholder=''" onblur="this.placeholder='formuła'"></textarea><br />
+        <br /> <input type="text" name="from" placeholder="from" onfocus="this.placeholder=''" onblur="this.placeholder='from'" /><br />
+        <br /> <input type="text" name="to" placeholder="to" onfocus="this.placeholder=''" onblur="this.placeholder='to'" /><br />
+        <br /> <input type="text" name="n" placeholder="n" onfocus="this.placeholder=''" onblur="this.placeholder='n'" /><br />
+        <input type="submit" value="Oblicz" />
+
+    </form>
+
+    <div id="rangeresult" class="results"></div>
+    <div id="rangeresult1"></div>
+</div>
+
+

@@ -1,0 +1,115 @@
+﻿
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Create Equation";
+}
+
+<div id='createequation' class="basestyle">
+    <form id="onpform">
+
+        <br /> <textarea name="formulaonp" placeholder="onp" onfocus="this.placeholder=''" onblur="this.placeholder='onp'"></textarea><br />
+        <input type="submit" value="Stwórz równanie" />
+
+    </form>
+    <div id="onpresult" class="results"></div>
+    <table>
+        <tr class="firstrow">
+            <td>Operator</td>
+            <td>Przykład</td>
+            <td>Wynik</td>
+        </tr>
+        <tr>
+            <td>+</td>
+            <td>2 2 +</td>
+            <td>2+2</td>
+        </tr>
+        <tr>
+            <td>-</td>
+            <td>2 2 -</td>
+            <td>2-2</td>
+        </tr>
+        <tr>
+            <td>*</td>
+            <td>2 2 *</td>
+            <td>2*2</td>
+        </tr>
+        <tr>
+            <td>/</td>
+            <td>2 2 /</td>
+            <td>2/2</td>
+        </tr>
+        <tr>
+            <td>^</td>
+            <td>2 2 ^</td>
+            <td>2^2</td>
+        </tr>
+        <tr>
+            <td>exp</td>
+            <td>2 exp</td>
+            <td>exp(2)</td>
+        </tr>
+        <tr>
+            <td>log</td>
+            <td>2 log</td>
+            <td>log(2)</td>
+        </tr>
+        <tr>
+            <td>abs</td>
+            <td>-2 abs</td>
+            <td>abs(-2)</td>
+        </tr>
+        <tr>
+            <td>sin</td>
+            <td>2 sin</td>
+            <td>sin(2)</td>
+        </tr>
+        <tr>
+            <td>cos</td>
+            <td>2 cos</td>
+            <td>cos(2)</td>
+        </tr>
+        <tr>
+            <td>tan</td>
+            <td>2 tan</td>
+            <td>tan(2)</td>
+        </tr>
+        <tr>
+            <td>sqrt</td>
+            <td>2 sqrt</td>
+            <td>sqrt(2)</td>
+        </tr>
+        <tr>
+            <td>sinh</td>
+            <td>2 sinh</td>
+            <td>sinh(2)</td>
+        </tr>
+        <tr>
+            <td>cosh</td>
+            <td>2 cosh</td>
+            <td>cosh(2)</td>
+        </tr>
+        <tr>
+            <td>tanh</td>
+            <td>2 tanh</td>
+            <td>tanh(2)</td>
+        </tr>
+        <tr>
+            <td>asin</td>
+            <td>1 asin</td>
+            <td>asin(1)</td>
+        </tr>
+        <tr>
+            <td>acos</td>
+            <td>1 acos</td>
+            <td>acos(1)</td>
+        </tr>
+        <tr>
+            <td>atan</td>
+            <td>1 atan</td>
+            <td>atan(1)</td>
+        </tr>
+
+    </table>
+</div>
+

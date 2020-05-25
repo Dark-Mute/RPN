@@ -184,7 +184,7 @@ namespace WEB_API
         List<elementType> CreateONP(string row, out List<string> infix)
         {
            
-            row = row.Replace("=","+").Replace('.', ',');//.Replace(' ','+');
+            row = row.Replace("=","+").Replace('.', ',').Replace(' ','+');
             List<elementType> elements = new List<elementType>();
             List<Stack<elementType>> characters = new List<Stack<elementType>>();
             Stack<elementType> sincosStack = new Stack<elementType>();

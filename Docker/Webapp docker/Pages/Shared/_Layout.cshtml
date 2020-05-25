@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+  
+    <title>@ViewData["Title"] - My Website</title>
+   
+
+  
+   
+    <link rel="stylesheet" href="/css/css.css" />
+</head>
+<body>
+
+    <header>
+        <h3> Moja Strona </h3>
+    </header>
+
+    <nav>
+        <ol>
+            <li><a asp-area="" asp-page="/Index">Home</a></li>
+            <li><a asp-area="" asp-page="/CreateONP">Stwórz onp</a></li>
+            <li><a asp-area="" asp-page="/CalculateEquation">Oblicz równanie</a></li>
+            <li><a asp-area="" asp-page="/CalculateEquationRange">Stwórz wykres równania</a></li>
+            <li><a asp-area="" asp-page="/CreateEquation">Stwórz równanie z onp</a></li>
+        </ol>
+
+    </nav>
+
+
+    <div id="content">
+        @RenderBody()
+    </div>
+
+
+    <script src="/js/jquery-1.11.3.min.js" asp-append-version="true"></script>
+    <script src="/js/canvasjs.min.js" asp-append-version="true"></script>
+    <script src="/js/script.js" asp-append-version="true"></script>
+
+
+
+
+
+</body>
+</html>
