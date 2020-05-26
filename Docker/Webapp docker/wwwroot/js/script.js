@@ -246,7 +246,6 @@ else if (calculaterangeform != null) {
             var rangeValue = inputFormulaRange.value;
             rangeValue = rangeValue.split("+").join("=");
             var request = new XMLHttpRequest();
-            var request = new XMLHttpRequest();
             request.open('GET', link + 'calculate/xy?formula=' + rangeValue + '&from=' + inputFrom.value + '&to=' + inputTo.value + '&n=' + inputN.value, true);
             request.onerror = function () {
                 alert("Połączenie z API zostało zerwane");
@@ -392,52 +391,7 @@ else if (onpform != null) {
         onpresult.style.display = "none";
     }
 
-    function RenderChart(results) {
-
-        var chart = new CanvasJS.Chart("rangeresult1",
-            {
-                animationEnabled: true,
-                zoomEnabled: true,
-                title: {
-                    text: "Wyniki obliczeń"
-                },
-                axisX: {
-                    valueFormatString: "#0.########",
-                    title: "Podane wartości",
-                },
-                axisY: {
-                    title: "Wyniki",
-                    includeZero: true,
-                },
-                legend: {
-                    cursor: "pointer",
-                    fontSize: 16,
-                    itemclick: toggleDataSeries
-                },
-                toolTip: {
-                    shared: true
-                },
-                data: [{
-                    name: "wynik",
-                    type: "spline",
-                    yValueFormatString: "#0.#############",
-                    showInLegend: true,
-                    dataPoints: results
-                }]
-            });
-        chart.render();
-
-        function toggleDataSeries(e) {
-            if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
-                e.dataSeries.visible = false;
-            }
-            else {
-                e.dataSeries.visible = true;
-            }
-            chart.render();
-        }
-
-    }
+   
 }
 
 function RenderChart(results) {
