@@ -1,0 +1,28 @@
+ 
+ Budowanie obrazów:
+
+ Webapi:
+    docker build -t (dowolna nazwa obrazu dla webapi) .    - należy być w folderze głównym webapi.
+
+ Webapp:
+    docker build -t (dowolna nazwa obrazu dla webapp) .    - należy być w folderze głównym webapp.
+
+Uruchomienie obrazów:
+
+Webapi:
+    docker run -p 8001:80 (wybrana nazwa obrazu dla webapi)        - uruchomienie web api musi być wykonane z portem udostępnianym 8001 ponieważ taki jest ustawiony w 
+                                                                     webapp w pliku script.js w zniennej link jako port dostępu do webapi.
+
+Webapp:
+    docker run -p (dowolny wolny port na komputerze):80 (wybrana nazwa obrazu dla webapp)      - webapp może być uruchomone na dowolnym porcie udodtępnianym który jest wolny, 
+                                                                                                 w pliku script.js znajduje się zmienna link która zawiera "ip dockera : 
+                                                                                                 port /api/" , ip w linku musi się zgadzać z ip waszego dockera, port jest 
+                                                                                                 to port udostępniany w celu komunikacji z web api, jeśli web api zostało 
+                                                                                                 uruchomine na innym porcie należy zmienić port w linku na port na którym 
+                                                                                                 uruchomine jest web api.
+
+Uruchomienie strony:
+
+W przeglądarce należy wpisać : "ip dockera : port webapp", przegladarka uruchomi stronę domową.
+
+
